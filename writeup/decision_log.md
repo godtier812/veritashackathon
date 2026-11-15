@@ -36,3 +36,12 @@
 8. **Zinc-coordinating sites confirmed (PDB 1JM7):** Confirmed Section 7.10 zinc-binding RING positions `[24, 27, 39, 41, 44, 47, 61, 64]` against BRCA1-BARD1 RING structure PDB entry `1JM7`; draw heat map markers with the label `"zinc-holding letters (PDB 1JM7)"`.
 9. **Updated fixed sentence S3 wording:** Sentence `S3` is now: `"We could not detect a benefit from adding labels from the other end of the protein."`
 10. **Write-up takeaway line placement:** Put one takeaway line directly under the disclaimer, made of the main fixed sentence followed by `S6`.
+
+## Stage 4 — Feature Engineering, Start-Region Freezing, and Evaluation Guards
+
+- **Arm 3 feature set and fixed order:** Combine `esm_score`, `blosum_score`, `entropy`, `size_change` (Zamyatnin 1972 residue volume in Å³, `new - wild_type`), `hydrophobicity_change` (Kyte & Doolittle 1982 hydropathy, `new - wild_type`), `to_proline`, `from_cysteine`, and `from_glycine` in fixed `FEATURE_ORDER`.
+- **Swap-kind priority hierarchy:** Assign each mutation to one swap kind in strict priority order: `to_proline` (`new_letter == "P"`), `loss_of_cysteine` (`wild_type == "C"`), `charge_change` (net charge change with `K, R = +1`, `D, E = -1`, and `H = 0`), then `other`.
+- **Arm 3 out-of-fold cutoff and refit (Rules 4, 7, 13):** Choose the Arm 3 90%-catch probability cutoff on out-of-fold probabilities from `StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)` grouped by `position` over the 516 start-region `LOF` and `FUNC` rows (`INT` excluded) using a `StandardScaler` + default `LogisticRegression(random_state=42)` pipeline, then refit on all 516 start-region rows and freeze the fitted parameters in `outputs/frozen.json`.
+- **Arm 2 "Can't tell" band (Rule 10):** Set Cutoff A to Arm 2's 90%-catch start-region cutoff and Cutoff B to the lowest observed harm score flagging at most 10% of the 385 start-region `FUNC` rows (at most 38 rows), enabling a `"Can't tell"` band only if `cutoff_b > cutoff_a`.
+- **Pre-test freeze and run-log locks (Rules 8, 9, 15):** Record the SHA-256 hashes of `outputs/esm_scores.csv` and `data/brca1_missense_scores_slim.csv` inside `outputs/frozen.json`, block overwriting or score recomputation once frozen or once `outputs/results/run_log.txt` records any attempt, and require `status=started` to be written to `run_log.txt` immediately before end-region labels are loaded in `src/evaluate.py`.
+

@@ -395,3 +395,735 @@ def test_only_refuses_end_region(
         "Use --letter-test-only to check end-region indexing."
     ) in captured.err
 
+
+def _patch_stage4_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict[str, Path]:
+    """Point all Stage 4 output and log paths in config at a temporary directory."""
+    outputs_dir = tmp_path / "outputs"
+    results_dir = outputs_dir / "results"
+    selfcheck_dir = outputs_dir / "selfcheck_start"
+    outputs_dir.mkdir(parents=True, exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
+    selfcheck_dir.mkdir(parents=True, exist_ok=True)
+
+    paths = {
+        "OUTPUTS_DIR": outputs_dir,
+        "ESM_SCORES_PATH": outputs_dir / "esm_scores.csv",
+        "FROZEN_PATH": outputs_dir / "frozen.json",
+        "RESULTS_DIR": results_dir,
+        "RUN_LOG_PATH": results_dir / "run_log.txt",
+        "SELFCHECK_DIR": selfcheck_dir,
+    }
+    for attr, path in paths.items():
+        monkeypatch.setattr(config, attr, path)
+    return paths
+
+
+def _synthetic_frozen_dict(
+    esm_sha256: str = "a" * 64,
+    cutoff_a: float = 2.0,
+    cutoff_b: float | None = 5.0,
+    has_band_flag: bool = True,
+) -> dict[str, object]:
+    """Build a synthetic frozen configuration dictionary matching Section 6.5."""
+    return {
+        "schema_version": 1,
+        "created_at": "2026-11-15T03:10:42-06:00",
+        "code_commit": "0" * 40,
+        "code_dirty": False,
+        "seed": 42,
+        "model_id": config.MODEL_ID,
+        "inputs": {
+            "esm_scores_path": "outputs/esm_scores.csv",
+            "esm_scores_sha256": esm_sha256,
+            "esm_scores_rows": config.N_SCORE_ROWS,
+            "slim_csv_sha256": config.SLIM_CSV_SHA256,
+        },
+        "tuning_region": "start",
+        "test_region": "end",
+        "labels": {
+            "harmful_class": config.HARMFUL_CLASS,
+            "harmless_class": config.HARMLESS_CLASS,
+            "excluded_class": config.EXCLUDED_CLASS,
+            "lof_below": config.LOF_BELOW,
+            "func_above": config.FUNC_ABOVE,
+        },
+        "tuning_counts": {"harmful": 131, "harmless": 385, "int_excluded": 59},
+        "catch_target_percent": config.CATCH_TARGET_PERCENT,
+        "false_alarm_target_percent": config.FALSE_ALARM_TARGET_PERCENT,
+        "arms": {
+            "arm0": {
+                "name": config.ARM_NAMES["arm0"],
+                "cutoff": None,
+            },
+            "arm1": {
+                "name": config.ARM_NAMES["arm1"],
+                "harm_score": "0 - blosum62(wild_type, new_letter)",
+                "cutoff": 0.0,
+                "tuning_caught": 120,
+                "tuning_false_alarms": 217,
+            },
+            "arm2": {
+                "name": config.ARM_NAMES["arm2"],
+                "harm_score": "0 - esm_score",
+                "cutoff": cutoff_a,
+                "tuning_caught": 118,
+                "tuning_false_alarms": 99,
+            },
+            "arm3": {
+                "name": config.ARM_NAMES["arm3"],
+                "harm_score": "predicted probability of harmful",
+                "features": list(config.FEATURE_ORDER),
+                "scaler_mean": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                "scaler_scale": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                "coefficients": [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                "intercept": 0.0,
+                "cutoff": 0.9,
+                "cutoff_source": (
+                    "out-of-fold probabilities, StratifiedGroupKFold(n_splits=5, "
+                    "shuffle=True, random_state=42), groups = position"
+                ),
+                "model_settings": {
+                    "C": 1.0,
+                    "solver": "lbfgs",
+                    "max_iter": 100,
+                    "random_state": 42,
+                },
+                "converged": True,
+                "out_of_fold_caught": 118,
+                "out_of_fold_false_alarms": 99,
+                "tuning_caught": 120,
+                "tuning_false_alarms": 90,
+            },
+        },
+        "band": {
+            "arm": "arm2",
+            "cutoff_a": cutoff_a,
+            "cutoff_b": cutoff_b,
+            "has_band": has_band_flag,
+        },
+        "versions": {
+            "python": "3.12.10",
+            "numpy": "2.4.4",
+            "pandas": "2.3.3",
+            "scikit_learn": "1.8.0",
+            "biopython": "1.88",
+        },
+    }
+
+
+def _synthetic_six_row_feature_table() -> pd.DataFrame:
+    """Build a 6-row synthetic feature table with known BLOSUM and ESM values."""
+    from src import features
+
+    raw_scores = pd.DataFrame(
+        {
+            "position": [1631, 1632, 1633, 1634, 1635, 1636],
+            "region": ["end"] * 6,
+            "wild_type": ["C", "C", "A", "D", "M", "S"],
+            "new_letter": ["G", "G", "T", "E", "I", "A"],
+            "mutant": ["C1631G", "C1632G", "A1633T", "D1634E", "M1635I", "S1636A"],
+            "esm_score": [-6.0, -5.0, -3.0, -2.0, -0.5, 1.0],
+            "entropy": [0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+            "function_score": [-2.1, -1.8, 0.1, 0.2, -1.9, 0.3],
+            "findlay_class": ["LOF", "LOF", "FUNC", "FUNC", "LOF", "FUNC"],
+            "is_harmful": pd.Series([1, 1, 0, 0, 1, 0], dtype="Int64"),
+        }
+    )
+    return features.build_feature_table(raw_scores)
+
+
+def test_swap_kind_each_kind() -> None:
+    """Section 7.9 swap_kind priority order and charge helper match all worked pairs."""
+    from src import features
+
+    assert features.charge("K") == 1
+    assert features.charge("R") == 1
+    assert features.charge("D") == -1
+    assert features.charge("E") == -1
+    assert features.charge("H") == 0
+    assert features.charge("A") == 0
+
+    cases = [
+        ("L", "P", "to_proline"),
+        ("C", "G", "loss_of_cysteine"),
+        ("C", "R", "loss_of_cysteine"),
+        ("C", "P", "to_proline"),
+        ("S", "D", "charge_change"),
+        ("L", "K", "charge_change"),
+        ("H", "R", "charge_change"),
+        ("K", "R", "other"),
+        ("L", "S", "other"),
+    ]
+    for wild_type, new_letter, expected in cases:
+        assert features.swap_kind(wild_type, new_letter) == expected
+
+
+def test_features_c61g() -> None:
+    """Section 8.6 worked example for C61G matches all biochemical features and raw matrix."""
+    from src import features
+
+    scores = pd.DataFrame(
+        {
+            "position": [61],
+            "region": ["start"],
+            "wild_type": ["C"],
+            "new_letter": ["G"],
+            "mutant": ["C61G"],
+            "esm_score": [-9.123456],
+            "entropy": [0.412345],
+        }
+    )
+    table = features.build_feature_table(scores)
+    row = table.iloc[0]
+
+    assert int(row["blosum_score"]) == -3
+    assert float(row["harm_arm1"]) == 3.0
+    assert float(row["harm_arm2"]) == pytest.approx(9.123456)
+    assert float(row["size_change"]) == pytest.approx(-48.4)
+    assert float(row["hydrophobicity_change"]) == pytest.approx(-2.9)
+    assert int(row["to_proline"]) == 0
+    assert int(row["from_cysteine"]) == 1
+    assert int(row["from_glycine"]) == 0
+    assert row["swap_kind"] == "loss_of_cysteine"
+
+    mat = features.feature_matrix(table)
+    assert mat.shape == (1, 8)
+    assert mat.dtype == np.float64
+    assert np.allclose(
+        mat[0],
+        [-9.123456, -3.0, 0.412345, -48.4, -2.9, 0.0, 1.0, 0.0],
+    )
+
+
+def test_arm3_probability_matches_sklearn() -> None:
+    """arm3_probability matches StandardScaler + LogisticRegression predict_proba[:, 1] within 1e-9."""
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+
+    from src import features
+
+    rng = np.random.default_rng(42)
+    x = rng.normal(loc=1.2, scale=2.3, size=(80, 8))
+    y = rng.integers(0, 2, size=80)
+    y[0], y[1] = 0, 1
+
+    pipeline = make_pipeline(StandardScaler(), LogisticRegression(random_state=42))
+    pipeline.fit(x, y)
+    scaler: StandardScaler = pipeline.named_steps["standardscaler"]
+    model: LogisticRegression = pipeline.named_steps["logisticregression"]
+
+    manual = features.arm3_probability(
+        x,
+        scaler.mean_,
+        scaler.scale_,
+        model.coef_[0],
+        float(model.intercept_[0]),
+    )
+    expected = pipeline.predict_proba(x)[:, 1]
+    assert manual.shape == (80,)
+    assert np.max(np.abs(manual - expected)) < 1e-9
+
+    with pytest.raises(ValueError):
+        features.arm3_probability(
+            x[:, :7],
+            scaler.mean_,
+            scaler.scale_,
+            model.coef_[0],
+            float(model.intercept_[0]),
+        )
+
+
+def test_fit_arm3_groups_do_not_leak(monkeypatch: pytest.MonkeyPatch) -> None:
+    """fit_arm3 on 40 groups yields finite out-of-fold probabilities with disjoint group folds."""
+    import sklearn.model_selection as model_selection
+
+    from src import features
+
+    real_sgkf = model_selection.StratifiedGroupKFold
+    folds_checked: list[tuple[set[int], set[int]]] = []
+
+    class _CheckingSGKFold:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            self._inner = real_sgkf(*args, **kwargs)
+
+        def split(
+            self,
+            x_arr: np.ndarray,
+            y_arr: np.ndarray,
+            groups_arr: np.ndarray,
+        ):
+            for train_idx, test_idx in self._inner.split(x_arr, y_arr, groups_arr):
+                train_groups = {int(g) for g in np.asarray(groups_arr)[train_idx]}
+                test_groups = {int(g) for g in np.asarray(groups_arr)[test_idx]}
+                assert train_groups.isdisjoint(test_groups)
+                folds_checked.append((train_groups, test_groups))
+                yield train_idx, test_idx
+
+    monkeypatch.setattr(model_selection, "StratifiedGroupKFold", _CheckingSGKFold)
+    if hasattr(features, "StratifiedGroupKFold"):
+        monkeypatch.setattr(features, "StratifiedGroupKFold", _CheckingSGKFold)
+
+    rng = np.random.default_rng(42)
+    groups = np.repeat(np.arange(1, 41, dtype=int), 3)
+    x = rng.normal(size=(len(groups), 8))
+    y = np.array([idx % 2 for idx in range(len(groups))], dtype=int)
+
+    fitted = features.fit_arm3(x, y, groups)
+    oof = np.asarray(fitted["out_of_fold_probabilities"], dtype=np.float64)
+
+    assert len(folds_checked) == config.N_FOLDS
+    assert oof.shape == (len(groups),)
+    assert not np.isnan(oof).any()
+    assert ((oof >= 0.0) & (oof <= 1.0)).all()
+    assert len(fitted["scaler_mean"]) == 8
+    assert len(fitted["scaler_scale"]) == 8
+    assert len(fitted["coefficients"]) == 8
+    assert isinstance(fitted["cutoff"], float)
+    assert isinstance(fitted["converged"], bool)
+
+
+def test_apply_frozen_arms_synthetic() -> None:
+    """apply_frozen_arms produces hand-computed flags, probabilities, and band verdicts on 6 rows."""
+    from src import evaluate
+
+    table = _synthetic_six_row_feature_table()
+    frozen = _synthetic_frozen_dict(cutoff_a=2.0, cutoff_b=5.0, has_band_flag=True)
+
+    pred = evaluate.apply_frozen_arms(table, frozen)
+    expected_harm3 = [1.0 / (1.0 + math.exp(-h)) for h in [6.0, 5.0, 3.0, 2.0, 0.5, -1.0]]
+
+    assert np.allclose(pred["harm_arm3"].to_numpy(dtype=float), expected_harm3, atol=1e-9)
+    assert [int(v) for v in pred["flag_arm1"].tolist()] == [1, 1, 1, 0, 0, 0]
+    assert [int(v) for v in pred["flag_arm2"].tolist()] == [1, 1, 1, 1, 0, 0]
+    assert [int(v) for v in pred["flag_arm3"].tolist()] == [1, 1, 1, 0, 0, 0]
+    assert pred["band_arm2"].tolist() == [
+        "Looks harmful",
+        "Looks harmful",
+        "Can't tell",
+        "Can't tell",
+        "Looks harmless",
+        "Looks harmless",
+    ]
+
+
+def test_headline_table_synthetic() -> None:
+    """headline_table matches hand-computed outcome counts and rates across all four arms."""
+    from src import evaluate, features
+
+    table = _synthetic_six_row_feature_table()
+    int_row = features.build_feature_table(
+        pd.DataFrame(
+            {
+                "position": [1637],
+                "region": ["end"],
+                "wild_type": ["C"],
+                "new_letter": ["G"],
+                "mutant": ["C1637G"],
+                "esm_score": [-8.0],
+                "entropy": [0.3],
+                "function_score": [-1.0],
+                "findlay_class": ["INT"],
+                "is_harmful": pd.Series([pd.NA], dtype="Int64"),
+            }
+        )
+    )
+    combined = pd.concat([table, int_row], ignore_index=True)
+    frozen = _synthetic_frozen_dict(cutoff_a=2.0, cutoff_b=5.0, has_band_flag=True)
+    pred = evaluate.apply_frozen_arms(combined, frozen)
+    headline = evaluate.headline_table(pred, frozen)
+
+    assert headline["arm"].tolist() == ["arm0", "arm1", "arm2", "arm3"]
+    expected_rows = {
+        "arm0": (3, 3, 0, 3, 0, 3, 0.0, 0.0, 50.0),
+        "arm1": (3, 3, 2, 1, 1, 2, 66.7, 33.3, 66.7),
+        "arm2": (3, 3, 2, 1, 2, 1, 66.7, 66.7, 50.0),
+        "arm3": (3, 3, 2, 1, 1, 2, 66.7, 33.3, 66.7),
+    }
+    for _, row in headline.iterrows():
+        arm = str(row["arm"])
+        exp = expected_rows[arm]
+        assert int(row["n_harmful"]) == exp[0]
+        assert int(row["n_harmless"]) == exp[1]
+        assert int(row["harmful_caught"]) == exp[2]
+        assert int(row["harmful_missed"]) == exp[3]
+        assert int(row["false_alarms"]) == exp[4]
+        assert int(row["harmless_cleared"]) == exp[5]
+        assert int(row["harmful_caught"]) + int(row["harmful_missed"]) == int(row["n_harmful"])
+        assert int(row["false_alarms"]) + int(row["harmless_cleared"]) == int(row["n_harmless"])
+        assert float(row["catch_rate_percent"]) == pytest.approx(exp[6])
+        assert float(row["false_alarm_rate_percent"]) == pytest.approx(exp[7])
+        assert float(row["accuracy_percent"]) == pytest.approx(exp[8])
+
+
+def test_auroc_direction() -> None:
+    """auroc_table returns 1.0 when harmful rows rank above harmless rows and 0.0 when reversed."""
+    from src import evaluate
+
+    pred_perfect = pd.DataFrame(
+        {
+            "findlay_class": ["LOF", "LOF", "LOF", "FUNC", "FUNC", "FUNC"],
+            "is_harmful": pd.Series([1, 1, 1, 0, 0, 0], dtype="Int64"),
+            "harm_arm1": [3.0, 2.0, 1.0, 0.0, -1.0, -2.0],
+            "harm_arm2": [9.0, 8.0, 7.0, 2.0, 1.0, 0.5],
+            "harm_arm3": [0.95, 0.90, 0.85, 0.25, 0.15, 0.05],
+        }
+    )
+    auroc_high = evaluate.auroc_table(pred_perfect).set_index("arm")["auroc"].to_dict()
+    assert auroc_high["arm0"] == pytest.approx(0.5)
+    assert auroc_high["arm1"] == pytest.approx(1.0)
+    assert auroc_high["arm2"] == pytest.approx(1.0)
+    assert auroc_high["arm3"] == pytest.approx(1.0)
+
+    pred_reversed = pred_perfect.copy()
+    pred_reversed["harm_arm1"] = -pred_perfect["harm_arm1"]
+    pred_reversed["harm_arm2"] = -pred_perfect["harm_arm2"]
+    pred_reversed["harm_arm3"] = 1.0 - pred_perfect["harm_arm3"]
+
+    auroc_low = evaluate.auroc_table(pred_reversed).set_index("arm")["auroc"].to_dict()
+    assert auroc_low["arm0"] == pytest.approx(0.5)
+    assert auroc_low["arm1"] == pytest.approx(0.0)
+    assert auroc_low["arm2"] == pytest.approx(0.0)
+    assert auroc_low["arm3"] == pytest.approx(0.0)
+
+
+def test_bootstrap_resamples_positions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """bootstrap_auroc_differences is deterministic, resamples positions with duplicates, and skips 1-class draws."""
+    from sklearn import metrics as sk_metrics
+
+    from src import evaluate
+
+    rows: list[dict[str, object]] = []
+    counts_per_pos = [1, 2, 3, 4, 1, 2, 3, 4, 2, 5]
+    rng = np.random.default_rng(42)
+    for idx, n_rows in enumerate(counts_per_pos):
+        pos = 1631 + idx
+        for r_idx in range(n_rows):
+            harmful = 1 if (idx + r_idx) % 2 == 0 else 0
+            rows.append(
+                {
+                    "position": pos,
+                    "findlay_class": "LOF" if harmful else "FUNC",
+                    "is_harmful": harmful,
+                    "harm_arm1": float(harmful * 2.0 + rng.normal(0.0, 0.5)),
+                    "harm_arm2": float(harmful * 3.0 + rng.normal(0.0, 0.5)),
+                    "harm_arm3": float(np.clip(0.2 + 0.6 * harmful + rng.normal(0.0, 0.1), 0.01, 0.99)),
+                }
+            )
+    pred = pd.DataFrame(rows)
+
+    res_a = evaluate.bootstrap_auroc_differences(pred, n_resamples=60, seed=42)
+    res_b = evaluate.bootstrap_auroc_differences(pred, n_resamples=60, seed=42)
+    assert res_a == res_b
+    assert res_a["n_positions"] == 10
+    assert res_a["n_resamples_requested"] == 60
+    assert res_a["n_resamples_used"] + res_a["n_resamples_skipped_one_class"] == 60
+
+    real_roc_auc = sk_metrics.roc_auc_score
+    seen_sizes: list[int] = []
+
+    def _recording_auc(y_true: object, y_score: object) -> float:
+        seen_sizes.append(len(np.asarray(y_true)))
+        return float(real_roc_auc(y_true, y_score))
+
+    monkeypatch.setattr(sk_metrics, "roc_auc_score", _recording_auc)
+    if hasattr(evaluate, "roc_auc_score"):
+        monkeypatch.setattr(evaluate, "roc_auc_score", _recording_auc)
+
+    evaluate.bootstrap_auroc_differences(pred, n_resamples=60, seed=42)
+    assert len(set(seen_sizes)) > 1
+
+    one_class_pred = pd.DataFrame(
+        {
+            "position": [1631, 1631, 1632, 1632, 1633],
+            "findlay_class": ["FUNC", "FUNC", "FUNC", "FUNC", "LOF"],
+            "is_harmful": [0, 0, 0, 0, 1],
+            "harm_arm1": [0.0, 1.0, -1.0, 0.0, 3.0],
+            "harm_arm2": [1.0, 2.0, 0.5, 1.5, 8.0],
+            "harm_arm3": [0.1, 0.2, 0.15, 0.25, 0.9],
+        }
+    )
+    res_skip = evaluate.bootstrap_auroc_differences(one_class_pred, n_resamples=80, seed=42)
+    assert res_skip["n_resamples_skipped_one_class"] > 0
+    assert res_skip["n_resamples_used"] + res_skip["n_resamples_skipped_one_class"] == 80
+
+
+def test_choose_sentences_rules() -> None:
+    """choose_sentences selects S1/S2/S3/S4/S5/S6 and NO FIXED SENTENCE according to Section 8.9 rules."""
+    from src import evaluate
+
+    def _make_headline(arm2_catch: float, arm2_fa: int = 120) -> pd.DataFrame:
+        return pd.DataFrame(
+            [
+                {
+                    "arm": "arm0",
+                    "arm_name": config.ARM_NAMES["arm0"],
+                    "cutoff": np.nan,
+                    "n_harmful": 267,
+                    "n_harmless": 899,
+                    "harmful_caught": 0,
+                    "harmful_missed": 267,
+                    "false_alarms": 0,
+                    "harmless_cleared": 899,
+                    "catch_rate_percent": 0.0,
+                    "false_alarm_rate_percent": 0.0,
+                    "accuracy_percent": 77.1,
+                },
+                {
+                    "arm": "arm1",
+                    "arm_name": config.ARM_NAMES["arm1"],
+                    "cutoff": 0.0,
+                    "n_harmful": 267,
+                    "n_harmless": 899,
+                    "harmful_caught": 243,
+                    "harmful_missed": 24,
+                    "false_alarms": 400,
+                    "harmless_cleared": 499,
+                    "catch_rate_percent": 91.0,
+                    "false_alarm_rate_percent": 44.5,
+                    "accuracy_percent": 63.6,
+                },
+                {
+                    "arm": "arm2",
+                    "arm_name": config.ARM_NAMES["arm2"],
+                    "cutoff": 5.0,
+                    "n_harmful": 267,
+                    "n_harmless": 899,
+                    "harmful_caught": 243,
+                    "harmful_missed": 24,
+                    "false_alarms": arm2_fa,
+                    "harmless_cleared": 899 - arm2_fa,
+                    "catch_rate_percent": arm2_catch,
+                    "false_alarm_rate_percent": round(100.0 * arm2_fa / 899, 1),
+                    "accuracy_percent": 80.0,
+                },
+                {
+                    "arm": "arm3",
+                    "arm_name": config.ARM_NAMES["arm3"],
+                    "cutoff": 0.5,
+                    "n_harmful": 267,
+                    "n_harmless": 899,
+                    "harmful_caught": 243,
+                    "harmful_missed": 24,
+                    "false_alarms": 110,
+                    "harmless_cleared": 789,
+                    "catch_rate_percent": 91.0,
+                    "false_alarm_rate_percent": 12.2,
+                    "accuracy_percent": 88.5,
+                },
+            ]
+        )
+
+    s1_only = evaluate.choose_sentences(
+        _make_headline(91.0, 120),
+        {
+            "esm_minus_blosum": {"point": 0.06, "low": 0.02, "high": 0.10},
+            "arm3_minus_esm": {"point": 0.00, "low": -0.01, "high": 0.02},
+        },
+    )
+    assert (
+        "S1: A model that only read protein sequences ranked harmful BRCA1 mutations "
+        "better than a classic substitution table."
+    ) in s1_only
+    assert not any(line.startswith("S4") for line in s1_only)
+    assert (
+        "S3: We could not detect a benefit from adding labels from the other end of the protein."
+        in s1_only
+    )
+    assert not any(line.startswith("S5") for line in s1_only)
+    assert (
+        "S6: To catch 91.0% of harmful mutations, the model also flagged 120 of 899 harmless ones."
+        in s1_only
+    )
+
+    s1_and_s4 = evaluate.choose_sentences(
+        _make_headline(91.0, 120),
+        {
+            "esm_minus_blosum": {"point": 0.02, "low": 0.01, "high": 0.04},
+            "arm3_minus_esm": {"point": 0.03, "low": 0.01, "high": 0.05},
+        },
+    )
+    assert any(line.startswith("S1:") for line in s1_and_s4)
+    assert any(line.startswith("S4:") for line in s1_and_s4)
+    assert not any(line.startswith("S3") for line in s1_and_s4)
+    assert any(line.startswith("S6:") for line in s1_and_s4)
+
+    s2_case = evaluate.choose_sentences(
+        _make_headline(91.0, 120),
+        {
+            "esm_minus_blosum": {"point": 0.01, "low": -0.02, "high": 0.05},
+            "arm3_minus_esm": {"point": 0.00, "low": -0.01, "high": 0.01},
+        },
+    )
+    assert "S2: No detectable difference at this sample size." in s2_case
+    assert not any(line.startswith("S1") for line in s2_case)
+    assert not any(line.startswith("S4") for line in s2_case)
+
+    below_zero_and_s5 = evaluate.choose_sentences(
+        _make_headline(83.0, 95),
+        {
+            "esm_minus_blosum": {"point": -0.04, "low": -0.08, "high": -0.01},
+            "arm3_minus_esm": {"point": -0.01, "low": -0.03, "high": 0.00},
+        },
+    )
+    assert (
+        "NO FIXED SENTENCE: the interval is entirely below zero, so BLOSUM62 ranked "
+        "better than ESM-2. Report this plainly and ask the humans for wording."
+    ) in below_zero_and_s5
+    assert any(
+        line.startswith("S5")
+        and "A cutoff tuned on one end of the protein did not carry over to the other: "
+        "it caught 83.0% instead of 90%." in line
+        for line in below_zero_and_s5
+    )
+    assert (
+        "S6: To catch 83.0% of harmful mutations, the model also flagged 95 of 899 harmless ones."
+        in below_zero_and_s5
+    )
+
+
+def test_verify_hash_on_temp_copy(tmp_path: Path) -> None:
+    """verify_hash passes on a matching temporary CSV and raises RuntimeError on a 1-byte change."""
+    from src import evaluate
+
+    temp_csv = tmp_path / "esm_scores.csv"
+    temp_csv.write_bytes(b"position,mutant,esm_score\n61,C61G,-9.123456\n")
+    expected_sha = config.sha256_of_file(temp_csv)
+    frozen = {"inputs": {"esm_scores_sha256": expected_sha}}
+
+    evaluate.verify_hash(frozen, temp_csv)
+
+    with open(temp_csv, "ab") as handle:
+        handle.write(b" ")
+
+    with pytest.raises(RuntimeError, match="HASH MISMATCH"):
+        evaluate.verify_hash(frozen, temp_csv)
+
+
+def test_may_run_refusal(tmp_path: Path) -> None:
+    """may_run allows first run or refused-only logs and requires non-empty bugfix reason after any attempt."""
+    from src import evaluate
+
+    missing_log = tmp_path / "missing_log.txt"
+    assert evaluate.prior_runs(missing_log) == []
+    assert evaluate.may_run(missing_log, None)[0] is True
+
+    refused_log = _write_log_lines(
+        tmp_path, "refused.txt", [("refused", "hash check"), ("refused", "dirty")]
+    )
+    assert evaluate.may_run(refused_log, None)[0] is True
+
+    started_log = _write_log_lines(tmp_path, "started.txt", [("started", "first run")])
+    allowed_started, msg_started = evaluate.may_run(started_log, None)
+    assert allowed_started is False
+    assert "Refusing to run:" in msg_started
+
+    success_log = _write_log_lines(
+        tmp_path, "success.txt", [("started", "first run"), ("success", "first run")]
+    )
+    allowed_success, msg_success = evaluate.may_run(success_log, None)
+    assert allowed_success is False
+    assert "Refusing to run:" in msg_success
+
+    failed_log = _write_log_lines(
+        tmp_path, "failed.txt", [("started", "first run"), ("failed", "boom")]
+    )
+    allowed_failed, msg_failed = evaluate.may_run(failed_log, None)
+    assert allowed_failed is False
+    assert "Refusing to run:" in msg_failed
+
+    assert evaluate.may_run(success_log, "fixed by-swap bug")[0] is True
+    assert evaluate.may_run(success_log, "")[0] is False
+    assert evaluate.may_run(success_log, "   ")[0] is False
+
+
+def test_freeze_refuses_overwrite(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """freeze.main refuses to overwrite frozen.json without --force and refuses after test_attempted even with --force."""
+    from src import freeze
+
+    paths = _patch_stage4_paths(tmp_path, monkeypatch)
+    paths["FROZEN_PATH"].write_text("{}\n", encoding="utf-8")
+
+    code_existing = freeze.main([])
+    captured_existing = capsys.readouterr()
+    assert code_existing != 0
+    assert "Refusing to overwrite outputs/frozen.json" in captured_existing.err
+
+    for status in ("success", "started", "failed"):
+        _write_log_lines(tmp_path, "temp_log.txt", [(status, "run attempt")])
+        paths["RUN_LOG_PATH"].write_text(
+            (tmp_path / "temp_log.txt").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        code_no_force = freeze.main([])
+        code_force = freeze.main(["--force"])
+        captured = capsys.readouterr()
+        assert code_no_force != 0
+        assert code_force != 0
+        assert (
+            "Refusing to freeze: the test run has started. Cutoffs may not change."
+            in captured.err
+        )
+
+
+def test_locked_hashes_block_changed_inputs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """locked_hashes returns (esm_sha256, frozen_sha256) and evaluate.main refuses when frozen.json hash changed."""
+    import json
+
+    from src import evaluate
+
+    paths = _patch_stage4_paths(tmp_path, monkeypatch)
+
+    assert evaluate.locked_hashes(paths["RUN_LOG_PATH"]) is None
+    paths["RUN_LOG_PATH"].write_text(
+        "2026-11-15T09:05:10-06:00 | run=1 | status=refused | kind=first | "
+        "reason=check | commit=0123abc | esm_sha256=" + ("1" * 64) + " | frozen_sha256=" + ("2" * 64) + "\n",
+        encoding="utf-8",
+    )
+    assert evaluate.locked_hashes(paths["RUN_LOG_PATH"]) is None
+
+    paths["ESM_SCORES_PATH"].write_bytes(b"position,mutant,esm_score\n61,C61G,-9.0\n")
+    esm_sha = config.sha256_of_file(paths["ESM_SCORES_PATH"])
+    frozen_obj = _synthetic_frozen_dict(esm_sha256=esm_sha)
+    paths["FROZEN_PATH"].write_text(json.dumps(frozen_obj, indent=2) + "\n", encoding="utf-8")
+    logged_frozen_sha = "f" * 64
+
+    paths["RUN_LOG_PATH"].write_text(
+        f"2026-11-15T09:05:10-06:00 | run=1 | status=started | kind=first | "
+        f"reason=first run | commit=0123abc | esm_sha256={esm_sha} | frozen_sha256={logged_frozen_sha}\n",
+        encoding="utf-8",
+    )
+    assert evaluate.locked_hashes(paths["RUN_LOG_PATH"]) == (esm_sha, logged_frozen_sha)
+
+    def _forbid_load_labels(*_args: object, **_kwargs: object) -> pd.DataFrame:
+        raise AssertionError("load_labels must not be called when locked hashes mismatch")
+
+    monkeypatch.setattr(load, "load_labels", _forbid_load_labels)
+
+    exit_code = evaluate.main(["--bugfix", "x"])
+    captured = capsys.readouterr()
+
+    assert exit_code != 0
+    assert (
+        "Refusing to run: frozen.json or esm_scores.csv is not the file the first run used."
+        in captured.err
+    )
+    log_lines = [
+        line.strip()
+        for line in paths["RUN_LOG_PATH"].read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(log_lines) == 2
+    assert "status=refused" in log_lines[1]
+
+
