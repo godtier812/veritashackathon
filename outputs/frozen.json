@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-15T11:04:02-06:00",
+  "code_commit": "718835a17e07a0e479740dc23459fd49f7b85a08",
+  "code_dirty": false,
+  "seed": 42,
+  "model_id": "facebook/esm2_t33_650M_UR50D",
+  "inputs": {
+    "esm_scores_path": "outputs/esm_scores.csv",
+    "esm_scores_sha256": "894e96ecd244dba588de35b32a0899b78ee2968a7273c63a99e1b6c58e2d17a8",
+    "esm_scores_rows": 6194,
+    "slim_csv_sha256": "4eb3d5597a4a2fcad88fa371b55cee9d8028c6df1ea18b95ad23802484e1a0ac"
+  },
+  "tuning_region": "start",
+  "test_region": "end",
+  "labels": {
+    "harmful_class": "LOF",
+    "harmless_class": "FUNC",
+    "excluded_class": "INT",
+    "lof_below": -1.328,
+    "func_above": -0.748
+  },
+  "tuning_counts": {
+    "harmful": 131,
+    "harmless": 385,
+    "int_excluded": 59
+  },
+  "catch_target_percent": 90,
+  "false_alarm_target_percent": 10,
+  "arms": {
+    "arm0": {
+      "name": "Always harmless",
+      "cutoff": null
+    },
+    "arm1": {
+      "name": "BLOSUM62 rule",
+      "harm_score": "0 - blosum62(wild_type, new_letter)",
+      "cutoff": 0.0,
+      "tuning_caught": 120,
+      "tuning_false_alarms": 217
+    },
+    "arm2": {
+      "name": "ESM-2 zero-shot",
+      "harm_score": "0 - esm_score",
+      "cutoff": 3.034498,
+      "tuning_caught": 118,
+      "tuning_false_alarms": 196
+    },
+    "arm3": {
+      "name": "Logistic regression on ESM-2 + BLOSUM62 + chemistry",
+      "harm_score": "predicted probability of harmful",
+      "features": [
+        "esm_score",
+        "blosum_score",
+        "entropy",
+        "size_change",
+        "hydrophobicity_change",
+        "to_proline",
+        "from_cysteine",
+        "from_glycine"
+      ],
+      "scaler_mean": [
+        -4.560702085271317,
+        -0.4573643410852713,
+        1.1300560096899224,
+        -1.461821705426356,
+        -0.32577519379844966,
+        0.046511627906976744,
+        0.0872093023255814,
+        0.015503875968992248
+      ],
+      "scaler_scale": [
+        3.500941929839204,
+        1.7038840806459896,
+        0.9261716482649697,
+        44.955782278226245,
+        3.723325592644567,
+        0.21059035204970736,
+        0.28214152461746345,
+        0.12354556163185444
+      ],
+      "coefficients": [
+        -1.3183110927553692,
+        -0.4790169723237681,
+        0.34217406724649424,
+        0.08925730804231545,
+        -0.2752828345184085,
+        0.1313099760636624,
+        0.7034512086680053,
+        -0.13961088830302176
+      ],
+      "intercept": -1.5343156463798375,
+      "cutoff": 0.09975243653458912,
+      "cutoff_source": "out-of-fold probabilities, StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42), groups = position",
+      "model_settings": {
+        "C": 1.0,
+        "solver": "lbfgs",
+        "max_iter": 100,
+        "random_state": 42
+      },
+      "converged": true,
+      "out_of_fold_caught": 118,
+      "out_of_fold_false_alarms": 176,
+      "tuning_caught": 122,
+      "tuning_false_alarms": 178
+    }
+  },
+  "band": {
+    "arm": "arm2",
+    "cutoff_a": 3.034498,
+    "cutoff_b": 7.751908,
+    "has_band": true
+  },
+  "versions": {
+    "python": "3.12.13",
+    "numpy": "2.4.4",
+    "pandas": "2.3.3",
+    "scikit_learn": "1.8.0",
+    "biopython": "1.88"
+  }
+}
