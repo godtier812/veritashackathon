@@ -79,4 +79,9 @@
 - **Programmatic notebook generator (`tools/build_notebook.py`):** Built `notebook.ipynb` via `nbformat.v4` with `REPO_URL = "https://github.com/godtier812/veritashackathon"`, reading all figures and statistics directly from repository files rather than typing numbers by hand, and omitting the cut `reverse_split.csv` cells per Cut List item 2.
 - **CPU execution and in-memory headline verification:** Executed `notebook.ipynb` end-to-end with `CUDA_VISIBLE_DEVICES=""` and saved all cell outputs in place, verifying in memory via pure functions (`load`, `baselines`, `features`, `evaluate.apply_frozen_arms`, `evaluate.headline_table`) that recomputed end-region headline counts match `outputs/results/headline.csv` without calling `evaluate.main` or writing to `outputs/`.
 
+## Stage 10 — Write-Up, README, and Submission Form Answers
+
+- **Full write-up and byte-for-byte `README.md` (`writeup/writeup.md`, `README.md`):** Wrote the Section 12.1 write-up with the exact disclaimer line, the `S1` + `S6` takeaway line directly beneath the disclaimer (Checkpoint A Decision 10), the verbatim headline table (`outputs/results/headline.md`) and pre-committed result sentences (`outputs/results/result_sentences.txt`), HTML provenance comments tracing every reported number to its source file, and Post-Stage 8 Human Decisions 2, 3, 4, and 5; replaced `README.md` with an identical copy of `writeup/writeup.md`.
+- **Submission form answers (`writeup/form_answers.md`):** Prepared the twelve Section 12.4 submission fields referencing `https://github.com/godtier812/veritashackathon`, keeping team identity fields as human-fillable placeholders for Round 1 blind judging, and verified both `colab-tester` (`WORKS`) and `claims-checker` (`CLEAN`).
+
 
