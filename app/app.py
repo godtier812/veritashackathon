@@ -84,6 +84,7 @@ APP_DATA: pd.DataFrame = pd.read_csv(
 
 _WT_BY_POS: dict[int, str] = {}
 _ROW_BY_POS_NEW: dict[tuple[int, str], dict] = {}
+_END_LAB_ROWS: list[tuple[float, str]] = []
 for _pos, _wt, _new, _esm, _lclass, _lscore in zip(
     APP_DATA["position"],
     APP_DATA["wild_type"],
@@ -93,12 +94,16 @@ for _pos, _wt, _new, _esm, _lclass, _lscore in zip(
     APP_DATA["lab_score"],
 ):
     _pos_int = int(_pos)
+    _esm_float = float(_esm)
+    _lclass_str = str(_lclass)
     _WT_BY_POS[_pos_int] = str(_wt)
     _ROW_BY_POS_NEW[(_pos_int, str(_new))] = {
-        "esm_score": float(_esm),
-        "lab_class": str(_lclass),
+        "esm_score": _esm_float,
+        "lab_class": _lclass_str,
         "lab_score": None if _lscore == "" else float(_lscore),
     }
+    if END_REGION[0] <= _pos_int <= END_REGION[1] and _lclass_str != "":
+        _END_LAB_ROWS.append((_esm_float, _lclass_str))
 
 
 def _r2_message(raw_text: str) -> str:
@@ -229,6 +234,47 @@ def _append_notes(content: str) -> str:
     return f"{content}\n\n---\n{DEMO_NOTE}\n{DISCLAIMER}"
 
 
+def _end_region_verdict_line(
+    verdict: str,
+    cutoff_a: float,
+    cutoff_b: float | None,
+) -> str:
+    """Format the held-out end-region track-record line for the given verdict."""
+    n_lof = 0
+    n_func = 0
+    n_int = 0
+    for esm_val, lclass in _END_LAB_ROWS:
+        if band_verdict(0.0 - esm_val, cutoff_a, cutoff_b) == verdict:
+            if lclass == HARMFUL_CLASS:
+                n_lof += 1
+            elif lclass == HARMLESS_CLASS:
+                n_func += 1
+            elif lclass == EXCLUDED_CLASS:
+                n_int += 1
+
+    if verdict == VERDICT_HARMFUL:
+        clear_total = n_lof + n_func
+        pct = 100.0 * n_lof / clear_total if clear_total > 0 else 0.0
+        return (
+            '**End-region track record:** On the held-out end region, "Looks harmful" '
+            f"matched the lab (LOF, harmful) on {n_lof} of {clear_total} clear-class "
+            f"mutations ({pct:.1f}%; {n_func} were FUNC harmless, plus {n_int} INT in between)."
+        )
+    if verdict == VERDICT_HARMLESS:
+        clear_total = n_lof + n_func
+        pct = 100.0 * n_func / clear_total if clear_total > 0 else 0.0
+        return (
+            '**End-region track record:** On the held-out end region, "Looks harmless" '
+            f"matched the lab (FUNC, harmless) on {n_func} of {clear_total} clear-class "
+            f"mutations ({pct:.1f}%; {n_lof} were LOF harmful, plus {n_int} INT in between)."
+        )
+    return (
+        '**End-region track record:** On the held-out end region, mutations given '
+        f'"Can\'t tell" were {n_lof} LOF harmful, {n_func} FUNC harmless, and {n_int} INT '
+        f"in between in the lab ({n_lof + n_func + n_int} total)."
+    )
+
+
 def check_mutation(text: str) -> str:
     """Validate, look up, and format the Markdown response for a single mutation input."""
     try:
@@ -278,6 +324,14 @@ def check_mutation(text: str) -> str:
             f"**How the verdict is set:** {how_text}",
             f"**Lab result (answer key):** {lab_text}",
         ]
+        if bool(APP_CONFIG.get("end_labels_included", False)):
+            lines.append(
+                _end_region_verdict_line(
+                    info["verdict"],
+                    cutoff_a,
+                    cutoff_b if has_band_flag else None,
+                )
+            )
         return _append_notes("\n\n".join(lines))
     except ValueError as exc:
         return _append_notes(str(exc))

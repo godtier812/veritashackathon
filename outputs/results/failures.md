@@ -15,6 +15,8 @@
 
 ## Explained wrong case
 
+**Fact from table:** Three of Arm 2's five worst misses are at adjacent positions 1823 and 1824 (`A1823S` at rank 1, `A1823T` at rank 2, and `I1824M` at rank 3).
+
 **Miss highlighted: `A1823S` (rank 1 miss).** Guess: At position 1823, sequence entropy is high (`2.572233`) and swapping `A` to `S` (`swap_kind=other`) has a positive BLOSUM62 score (`1`) and a positive ESM-2 score (`0.746405`, `harm_arm2=-0.746405`, `band_arm2=Looks harmless`), so Arm 2 and both other arms left it unflagged (`flag_arm1=0`, `flag_arm3=0`) even though the lab measured severe loss of function (`function_score=-3.642831`, `LOF`). Guess: Because the lab edited DNA rather than protein directly, the `A1823S` DNA change may have disrupted RNA splicing or a local requirement that a protein-only sequence model cannot observe.
 
 **Splicing note:** No full study table found. Splicing is stated as a limit we could not test.

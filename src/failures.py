@@ -238,6 +238,12 @@ def format_failures_markdown(failures_df: pd.DataFrame) -> str:
         "## Explained wrong case",
         "",
         (
+            "**Fact from table:** Three of Arm 2's five worst misses are at adjacent "
+            "positions 1823 and 1824 (`A1823S` at rank 1, `A1823T` at rank 2, and "
+            "`I1824M` at rank 3)."
+        ),
+        "",
+        (
             "**Miss highlighted: `A1823S` (rank 1 miss).** "
             "Guess: At position 1823, sequence entropy is high (`2.572233`) and "
             "swapping `A` to `S` (`swap_kind=other`) has a positive BLOSUM62 score "

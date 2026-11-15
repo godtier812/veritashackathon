@@ -1284,4 +1284,55 @@ def test_app_imports_no_model() -> None:
     assert proc.returncode == 0, proc.stderr
 
 
+def test_app_verdict_end_region_track_record(monkeypatch: pytest.MonkeyPatch) -> None:
+    """check_mutation includes the held-out end-region track record line per verdict when end labels are enabled."""
+    app_mod = _load_app_module()
+
+    out_harmful = app_mod.check_mutation("C61G")
+    for snippet in (
+        "End-region track record:",
+        "196 of 288",
+        "68.1%",
+        "92 were FUNC harmless",
+        "29 INT",
+    ):
+        assert snippet in out_harmful
+
+    out_harmless = app_mod.check_mutation("D2E")
+    for snippet in (
+        "End-region track record:",
+        "462 of 477",
+        "96.9%",
+        "15 were LOF harmful",
+        "20 INT",
+    ):
+        assert snippet in out_harmless
+
+    cutoff_a = float(app_mod.APP_CONFIG["cutoff_a"])
+    raw_cutoff_b = app_mod.APP_CONFIG.get("cutoff_b")
+    cutoff_b = None if raw_cutoff_b is None else float(raw_cutoff_b)
+    cant_tell_mutant: str | None = None
+    for row in app_mod.APP_DATA.to_dict("records"):
+        verdict = app_mod.band_verdict(0.0 - float(row["esm_score"]), cutoff_a, cutoff_b)
+        if verdict == "Can't tell":
+            cant_tell_mutant = f"{row['wild_type']}{int(row['position'])}{row['new_letter']}"
+            break
+    assert cant_tell_mutant is not None
+
+    out_cant_tell = app_mod.check_mutation(cant_tell_mutant)
+    for snippet in (
+        "End-region track record:",
+        "56 LOF harmful, 345 FUNC harmless, and 47 INT",
+        "448 total",
+    ):
+        assert snippet in out_cant_tell
+
+    monkeypatch.setitem(app_mod.APP_CONFIG, "end_labels_included", False)
+    out_locked = app_mod.check_mutation("C61G")
+    assert "End-region track record:" not in out_locked
+    assert config.DEMO_NOTE in out_locked
+    assert config.DISCLAIMER in out_locked
+
+
+
 
