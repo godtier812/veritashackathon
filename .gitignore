@@ -1,0 +1,21 @@
+# environments and caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# the full ProteinGym download (about 1 GB); only the BRCA1 file is used
+data/DMS_ProteinGym_substitutions/
+
+# organisers' PDFs: theirs, not ours to republish
+docs/
+
+# scratch output of the start-region self-check
+outputs/selfcheck_start/
+
+# planning files for a different tool; they also name the team (round 1 is blind)
+CLAUDE.md
+MASTER_PROMPT.md
+PROJECT_BRIEF.md
+.claude/
