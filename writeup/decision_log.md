@@ -45,3 +45,8 @@
 - **Arm 2 "Can't tell" band (Rule 10):** Set Cutoff A to Arm 2's 90%-catch start-region cutoff and Cutoff B to the lowest observed harm score flagging at most 10% of the 385 start-region `FUNC` rows (at most 38 rows), enabling a `"Can't tell"` band only if `cutoff_b > cutoff_a`.
 - **Pre-test freeze and run-log locks (Rules 8, 9, 15):** Record the SHA-256 hashes of `outputs/esm_scores.csv` and `data/brca1_missense_scores_slim.csv` inside `outputs/frozen.json`, block overwriting or score recomputation once frozen or once `outputs/results/run_log.txt` records any attempt, and require `status=started` to be written to `run_log.txt` immediately before end-region labels are loaded in `src/evaluate.py`.
 
+## Stage 5 — End-Region Test Run
+
+- **Single frozen end-region evaluation (Rules 2, 5, 6, 8, 13, 15):** Executed `python -m src.evaluate` once (`run=1`, `kind=first`, `status=started` followed by `status=success` in `outputs/results/run_log.txt`) on the held-out BRCT end region (`267` `LOF`, `899` `FUNC`, `96` `INT`) using only the pre-frozen parameters from `outputs/frozen.json`, omitting `reverse_split.csv` per Cut List item 2 and writing `headline.csv`, `headline.md`, `auroc.csv`, `bootstrap.json`, `band_counts.csv`, `by_swap.csv`, `int_rows.csv`, `predictions_end.csv`, `sanity7.json`, and `result_sentences.txt`.
+
+

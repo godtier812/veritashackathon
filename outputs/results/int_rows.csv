@@ -1,0 +1,7 @@
+region,arm,n_int,flagged,not_flagged,flagged_percent
+start,arm1,59,44,15,74.6
+start,arm2,59,40,19,67.8
+start,arm3,59,39,20,66.1
+end,arm1,96,72,24,75.0
+end,arm2,96,76,20,79.2
+end,arm3,96,67,29,69.8

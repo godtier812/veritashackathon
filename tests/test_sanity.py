@@ -106,3 +106,21 @@ def test_sanity_5_start_correlation() -> None:
 
     res = scipy.stats.spearmanr(merged["esm_score"], merged["function_score"])
     assert res.statistic > config.SPEARMAN_MIN_START
+
+
+def test_sanity_7_after_test() -> None:
+    """Post-test sanity check verifies negative M1775R/A1708E scores and positive overall Spearman."""
+    import json
+
+    if not load.test_run_done():
+        pytest.skip("runs only after the one test run")
+
+    sanity7_path = config.RESULTS_DIR / "sanity7.json"
+    assert sanity7_path.exists()
+    with open(sanity7_path, "r", encoding="utf-8") as handle:
+        data = json.load(handle)
+
+    assert data["M1775R_esm_score"] < 0
+    assert data["A1708E_esm_score"] < 0
+    assert data["spearman_all_1837"] > 0
+

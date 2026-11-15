@@ -1,0 +1,13 @@
+arm,swap_kind,n_harmful,n_harmless,harmful_caught,harmful_missed,false_alarms,catch_rate_percent,false_alarm_rate_percent
+arm1,to_proline,31,32,31,0,32,100.0,100.0
+arm1,loss_of_cysteine,9,20,9,0,20,100.0,100.0
+arm1,charge_change,96,310,84,12,219,87.5,70.6
+arm1,other,131,537,108,23,300,82.4,55.9
+arm2,to_proline,31,32,29,2,14,93.5,43.8
+arm2,loss_of_cysteine,9,20,9,0,15,100.0,75.0
+arm2,charge_change,96,310,91,5,178,94.8,57.4
+arm2,other,131,537,123,8,230,93.9,42.8
+arm3,to_proline,31,32,31,0,25,100.0,78.1
+arm3,loss_of_cysteine,9,20,9,0,20,100.0,100.0
+arm3,charge_change,96,310,89,7,161,92.7,51.9
+arm3,other,131,537,116,15,199,88.5,37.1

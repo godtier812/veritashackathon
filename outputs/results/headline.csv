@@ -1,0 +1,5 @@
+arm,arm_name,cutoff,n_harmful,n_harmless,harmful_caught,harmful_missed,false_alarms,harmless_cleared,catch_rate_percent,false_alarm_rate_percent,accuracy_percent
+arm0,Always harmless,,267,899,0,267,0,899,0.0,0.0,77.1
+arm1,BLOSUM62 rule,0.0,267,899,232,35,571,328,86.9,63.5,48.0
+arm2,ESM-2 zero-shot,3.034498,267,899,252,15,437,462,94.4,48.6,61.2
+arm3,Logistic regression on ESM-2 + BLOSUM62 + chemistry,0.09975243653458912,267,899,245,22,405,494,91.8,45.1,63.4
