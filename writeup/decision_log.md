@@ -66,3 +66,17 @@
 - **Standalone Gradio app (`app/app.py`):** Built the Hugging Face Space demo importing only `gradio`, `pandas`, `json`, `re`, and `pathlib` (no `src`, `torch`, or `transformers` imports), reading only `app/app_data.csv` and `app/app_config.json`, enforcing exact R1–R8 refusal messages, appending both fixed notes (`DEMO_NOTE` and `DISCLAIMER`) to every response and refusal, and calling `demo.launch()` with no arguments.
 - **Space packaging and Stage 8 unit tests:** Wrote `app/requirements.txt` (`pandas==2.3.3`) and `app/README.md` (`sdk: gradio`, `sdk_version: 6.32.0`, exam-not-use-case framing, and exact disclaimer), and verified all six Stage 8 unit tests (`test_app_parser_good`, `test_app_refusals`, `test_app_notes_always_present`, `test_app_lab_display`, `test_app_end_region_locked`, `test_app_imports_no_model`).
 
+## Post-Stage 8 — Human Decisions for Stages 9–10 and Demo Polish
+
+1. **Chained Stages 9 and 10 with repository URL:** Run Stages 9 and 10 back-to-back using the GitHub repository URL `https://github.com/godtier812/veritashackathon`.
+2. **Arm 3 bootstrap interval beside verbatim S3:** Next to verbatim sentence `S3` in the write-up and notebook, state the `arm3_minus_esm` 95% position-bootstrap AUROC difference interval (`-0.054` to `-0.014`) and note that it lies entirely below zero, without rewording `S3`.
+3. **Strict factual reporting at PDB 1JM7 zinc positions:** Do not claim zinc sites explain colours across positions `24–64`; state only what `outputs/heatmap.png` shows at the eight PDB `1JM7` zinc-holding positions (`[24, 27, 39, 41, 44, 47, 61, 64]`).
+4. **Positions 1823–1824 miss cluster note:** Note as a fact in the failure analysis (`outputs/results/failures.md`), notebook, and write-up that three of Arm 2's five worst misses lie at adjacent positions `1823` and `1824` (`A1823S`, `A1823T`, `I1824M`), while keeping every causal explanation prefixed with `"Guess:"`.
+5. **Dynamic end-region verdict track-record line in demo (`app/app.py`):** Add one dynamic end-region verdict track-record line to each valid answer in `app/app.py`, computed from `app/app_data.csv` and `app/app_config.json` the same way as `outputs/results/band_counts.csv` and shown only when `end_labels_included` is `True`.
+
+## Stage 9 — Reproducible Notebook
+
+- **Programmatic notebook generator (`tools/build_notebook.py`):** Built `notebook.ipynb` via `nbformat.v4` with `REPO_URL = "https://github.com/godtier812/veritashackathon"`, reading all figures and statistics directly from repository files rather than typing numbers by hand, and omitting the cut `reverse_split.csv` cells per Cut List item 2.
+- **CPU execution and in-memory headline verification:** Executed `notebook.ipynb` end-to-end with `CUDA_VISIBLE_DEVICES=""` and saved all cell outputs in place, verifying in memory via pure functions (`load`, `baselines`, `features`, `evaluate.apply_frozen_arms`, `evaluate.headline_table`) that recomputed end-region headline counts match `outputs/results/headline.csv` without calling `evaluate.main` or writing to `outputs/`.
+
+
