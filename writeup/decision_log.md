@@ -84,4 +84,23 @@
 - **Full write-up and byte-for-byte `README.md` (`writeup/writeup.md`, `README.md`):** Wrote the Section 12.1 write-up with the exact disclaimer line, the `S1` + `S6` takeaway line directly beneath the disclaimer (Checkpoint A Decision 10), the verbatim headline table (`outputs/results/headline.md`) and pre-committed result sentences (`outputs/results/result_sentences.txt`), HTML provenance comments tracing every reported number to its source file, and Post-Stage 8 Human Decisions 2, 3, 4, and 5; replaced `README.md` with an identical copy of `writeup/writeup.md`.
 - **Submission form answers (`writeup/form_answers.md`):** Prepared the twelve Section 12.4 submission fields referencing `https://github.com/godtier812/veritashackathon`, keeping team identity fields as human-fillable placeholders for Round 1 blind judging, and verified both `colab-tester` (`WORKS`) and `claims-checker` (`CLEAN`).
 
+## Post-Stage 10 — GitHub Push and Human Decisions for Stages 11–12
+
+- **Anonymized GitHub repository push:** Force-pushed the anonymized `main` branch (`02da42e`) to `https://github.com/godtier812/veritashackathon` with human approval, keeping `BUILD_SPEC.md`, `AGENTS.md`, and `GEMINI_START.md` tracked in git.
+- **Human decisions for Stages 11 and 12:**
+  1. Skip external `judge` review after Stage 10 and use the ten Section 12.8 questions as the base Q&A list.
+  2. Run Stages 11 and 12 back-to-back without stopping between them.
+  3. In the Stage 11 video script demo segment, show `C61G` first and then `D2E`, reading aloud the held-out end-region verdict track-record line for both verdicts (`196 of 288` for `"Looks harmful"` and `462 of 477` for `"Looks harmless"`).
+  4. In the Stage 12 Q&A sheet, add Question 11 explaining why Arm 3 ranked worse than zero-shot ESM-2 on the held-out end region, citing the `arm3_minus_esm` 95% position-bootstrap AUROC difference interval (`-0.054` to `-0.014`) and prefixing every causal explanation with `"Guess:"`.
+  5. At the end of Stage 12, list every file changed since the last push so the humans can push the final commits themselves.
+- **Live quiz deferral:** Skipped the interactive one-at-a-time live keyboard quiz at Stage 12 completion per human choice (`Ask-user decision A3`).
+
+## Stage 11 — Two-Minute Video Script
+
+- **Four-part timed script (`writeup/video_script.md`):** Wrote the two-minute presentation script (`15 s / 60 s / 30 s / 15 s`, `312` spoken words) covering the genetic counselor VUS problem, live demo walkthroughs of `C61G` and `D2E` with both held-out end-region verdict track-record lines (`196 of 288` and `462 of 477`) read aloud plus the `A1823S` miss, the exam-not-use-case framing and held-out end-region misses and false alarms across `arm0`–`arm2`, and the closing limits and exact prototype disclaimer.
+
+## Stage 12 — Q&A Preparation Sheet
+
+- **Locked-rules reference and eleven judge Q&As (`writeup/qa_sheet.md`):** Documented all 15 Section 3 locked rules in a four-column table (`Rule | What the rule locks | Why we locked it | Judge question it answers`), answered all ten Section 12.8 judge questions plus Question 11 on why Arm 3 ranked below zero-shot ESM-2 (with the `-0.054` to `-0.014` bootstrap interval and `"Guess:"`-prefixed causal hypotheses), recorded the deferred live-quiz status, and verified `CLEAN` via `rule-auditor`.
+
 
