@@ -1127,3 +1127,161 @@ def test_locked_hashes_block_changed_inputs(
     assert "status=refused" in log_lines[1]
 
 
+_APP_MOD_CACHE: object | None = None
+
+
+def _load_app_module():
+    """Load app/app.py by path or skip if Stage 8 app data has not been exported yet."""
+    global _APP_MOD_CACHE
+    app_py = config.APP_DIR / "app.py"
+    if not config.APP_DATA_PATH.exists() or not app_py.exists():
+        pytest.skip("app data not exported yet (stage 8)")
+    if _APP_MOD_CACHE is not None:
+        return _APP_MOD_CACHE
+
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("app_module", app_py)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _APP_MOD_CACHE = module
+    return module
+
+
+def test_app_parser_good() -> None:
+    """One-letter, p.-prefixed, whitespace-padded, and three-letter C61G forms parse to ('C', 61, 'G')."""
+    app_mod = _load_app_module()
+    good_inputs = [
+        "C61G",
+        "c61g",
+        "C61g",
+        " C61G ",
+        "p.C61G",
+        "P.c61g",
+        "Cys61Gly",
+        "p.Cys61Gly",
+        "CYS61GLY",
+    ]
+    for raw in good_inputs:
+        assert app_mod.parse_input(raw) == ("C", 61, "G")
+
+
+def test_app_refusals() -> None:
+    """App inputs failing R1-R6 rules produce the exact Section 8.13 refusal strings."""
+    app_mod = _load_app_module()
+
+    r1_expected = (
+        "Type a mutation such as C61G: the normal letter, the position, then the new letter."
+    )
+    for raw_r1 in ("", None):
+        out_r1 = app_mod.check_mutation(raw_r1)
+        assert out_r1.splitlines()[0] == r1_expected
+
+    r2_cases = [
+        ("hello", "hello"),
+        ("X61G", "X61G"),
+        ("c.181T>G", "c.181TG"),
+        ("C61*", "C61"),
+        ("Cys61Ter", "Cys61Ter"),
+    ]
+    for raw_r2, sanitized in r2_cases:
+        expected_r2 = (
+            f'I could not read "{sanitized}". Use the form C61G: the normal letter, '
+            "the position, then the new letter. Three-letter names such as Cys61Gly also work."
+        )
+        out_r2 = app_mod.check_mutation(raw_r2)
+        assert out_r2.splitlines()[0] == expected_r2
+
+    out_r3 = app_mod.check_mutation("C61C")
+    assert out_r3.splitlines()[0] == '"C61C" is not a change: both letters are C.'
+
+    for raw_r4, pos_num in (("C0G", 0), ("C5000G", 5000)):
+        out_r4 = app_mod.check_mutation(raw_r4)
+        assert (
+            out_r4.splitlines()[0]
+            == f"Position {pos_num} is outside BRCA1, which has 1,863 positions."
+        )
+
+    out_r5 = app_mod.check_mutation("C999G")
+    assert out_r5.splitlines()[0] == (
+        "Position 999 is not one of the 326 lab-tested positions (1 to 101 and 1631 to 1855). "
+        "This demo only answers where its answers can be checked against the lab, so it will not guess here."
+    )
+
+    out_r6 = app_mod.check_mutation("A61G")
+    assert (
+        out_r6.splitlines()[0]
+        == "BRCA1 has C at position 61, not A. Did you mean C61G?"
+    )
+
+
+def test_app_notes_always_present() -> None:
+    """Every valid and refused check_mutation call includes both fixed notes word for word."""
+    app_mod = _load_app_module()
+    for raw in ("C61G", "D2E", "C61A", "", "hello", "X61G", "C999G"):
+        output = app_mod.check_mutation(raw)
+        assert isinstance(output, str)
+        assert config.DEMO_NOTE in output
+        assert config.DISCLAIMER in output
+
+
+def test_app_lab_display() -> None:
+    """C61G displays Loss of function (harmful) and C61A displays not lab-tested."""
+    app_mod = _load_app_module()
+    out_c61g = app_mod.check_mutation("C61G")
+    assert "Loss of function (harmful)" in out_c61g
+
+    out_c61a = app_mod.check_mutation("C61A")
+    assert "not lab-tested" in out_c61a
+
+
+def test_app_end_region_locked(monkeypatch: pytest.MonkeyPatch) -> None:
+    """When end_labels_included is False, S1631A returns refusal R8 with no verdict/score and both notes."""
+    app_mod = _load_app_module()
+    monkeypatch.setitem(app_mod.APP_CONFIG, "end_labels_included", False)
+
+    output = app_mod.check_mutation("S1631A")
+    expected_r8 = (
+        "End-region answers (positions 1631 to 1855) are hidden until the one test run is done."
+    )
+    assert output.splitlines()[0] == expected_r8
+    for forbidden in (
+        "Looks harmful",
+        "Can't tell",
+        "Looks harmless",
+        "**Model verdict:**",
+        "**Model score:**",
+    ):
+        assert forbidden not in output
+    assert config.DEMO_NOTE in output
+    assert config.DISCLAIMER in output
+
+
+def test_app_imports_no_model() -> None:
+    """Importing app/app.py in a fresh subprocess does not import torch or transformers."""
+    import subprocess
+    import sys
+
+    app_py = config.APP_DIR / "app.py"
+    if not config.APP_DATA_PATH.exists() or not app_py.exists():
+        pytest.skip("app data not exported yet (stage 8)")
+
+    code = (
+        "import importlib.util, sys; "
+        f"spec = importlib.util.spec_from_file_location('app_module', {str(app_py)!r}); "
+        "mod = importlib.util.module_from_spec(spec); "
+        "spec.loader.exec_module(mod); "
+        "assert 'torch' not in sys.modules, 'torch imported'; "
+        "assert 'transformers' not in sys.modules, 'transformers imported'"
+    )
+    proc = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+
+
+

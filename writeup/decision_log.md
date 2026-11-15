@@ -60,5 +60,9 @@
 - **Static Matplotlib heat map (`outputs/heatmap.png`):** Rendered both the start region (`1–101`) and end region (`1631–1855`) on a fixed diverging `RdBu` scale (`vmin = -12.0`, `vmax = 12.0` centred at `0.0`) with white blank cells at each wild-type residue, overlaying `398` black `LOF` dots and `1,439` grey non-`LOF` (`FUNC`/`INT`) dots while omitting `outputs/heatmap.html` per Cut List item 4.
 - **RING zinc-coordinating site markers (Human Decision 8):** Marked RING positions `[24, 27, 39, 41, 44, 47, 61, 64]` above the start-region panel with the legend label `"zinc-holding letters (PDB 1JM7)"`.
 
+## Stage 8 — Gradio Prototype Demo
 
+- **Self-contained app export (`src/export_app.py`):** Exported `app/app_data.csv` (`6,194` rows, `1,837` rows with `lab_class` and 3-decimal `lab_score`) and `app/app_config.json` (`cutoff_a = 3.034498`, `cutoff_b = 7.751908`, `has_band = true`, `end_labels_included = true`) using a self-contained SHA-256 check on `outputs/esm_scores.csv` without importing `src.evaluate`, `Bio`, `torch`, or `transformers`.
+- **Standalone Gradio app (`app/app.py`):** Built the Hugging Face Space demo importing only `gradio`, `pandas`, `json`, `re`, and `pathlib` (no `src`, `torch`, or `transformers` imports), reading only `app/app_data.csv` and `app/app_config.json`, enforcing exact R1–R8 refusal messages, appending both fixed notes (`DEMO_NOTE` and `DISCLAIMER`) to every response and refusal, and calling `demo.launch()` with no arguments.
+- **Space packaging and Stage 8 unit tests:** Wrote `app/requirements.txt` (`pandas==2.3.3`) and `app/README.md` (`sdk: gradio`, `sdk_version: 6.32.0`, exam-not-use-case framing, and exact disclaimer), and verified all six Stage 8 unit tests (`test_app_parser_good`, `test_app_refusals`, `test_app_notes_always_present`, `test_app_lab_display`, `test_app_end_region_locked`, `test_app_imports_no_model`).
 

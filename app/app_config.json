@@ -1,0 +1,9 @@
+{
+  "model_id": "facebook/esm2_t33_650M_UR50D",
+  "cutoff_a": 3.034498,
+  "cutoff_b": 7.751908,
+  "has_band": true,
+  "end_labels_included": true,
+  "protein_length": 1863,
+  "n_tested_positions": 326
+}
