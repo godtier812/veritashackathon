@@ -49,4 +49,10 @@
 
 - **Single frozen end-region evaluation (Rules 2, 5, 6, 8, 13, 15):** Executed `python -m src.evaluate` once (`run=1`, `kind=first`, `status=started` followed by `status=success` in `outputs/results/run_log.txt`) on the held-out BRCT end region (`267` `LOF`, `899` `FUNC`, `96` `INT`) using only the pre-frozen parameters from `outputs/frozen.json`, omitting `reverse_split.csv` per Cut List item 2 and writing `headline.csv`, `headline.md`, `auroc.csv`, `bootstrap.json`, `band_counts.csv`, `by_swap.csv`, `int_rows.csv`, `predictions_end.csv`, `sanity7.json`, and `result_sentences.txt`.
 
+## Stage 6 — Failure Analysis
+
+- **Worst misses and false alarms selection:** Extracted Arm 2's five worst misses (`findlay_class == "LOF"`, `flag_arm2 == 0`, sorted by `harm_arm2` ascending, then `function_score` ascending, then `mutant` ascending) and five worst false alarms (`findlay_class == "FUNC"`, `flag_arm2 == 1`, sorted by `harm_arm2` descending, then `function_score` descending, then `mutant` ascending) from `outputs/results/predictions_end.csv` into `outputs/results/failures.csv` and `outputs/results/failures.md`.
+- **Labelled guesses and explained wrong case:** Prefixed every `guess_why` entry with `Guess:`, grounded each hypothesis strictly in observed table columns (`wild_type`, `new_letter`, `swap_kind`, `blosum_score`, `entropy`, `esm_score`, `harm_arm2`, `band_arm2`, `flag_arm1`, `flag_arm3`) with no biological mechanism stated as fact and no zinc references on BRCT positions, and selected rank-1 miss `A1823S` as the explained wrong case for the write-up.
+- **Splicing table check:** Confirmed no supplementary full study table is present in `data/`, recording DNA-level RNA splicing disruption as an untested limitation of protein-sequence-only scoring.
+
 
