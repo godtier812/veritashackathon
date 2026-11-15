@@ -55,4 +55,10 @@
 - **Labelled guesses and explained wrong case:** Prefixed every `guess_why` entry with `Guess:`, grounded each hypothesis strictly in observed table columns (`wild_type`, `new_letter`, `swap_kind`, `blosum_score`, `entropy`, `esm_score`, `harm_arm2`, `band_arm2`, `flag_arm1`, `flag_arm3`) with no biological mechanism stated as fact and no zinc references on BRCT positions, and selected rank-1 miss `A1823S` as the explained wrong case for the write-up.
 - **Splicing table check:** Confirmed no supplementary full study table is present in `data/`, recording DNA-level RNA splicing disruption as an untested limitation of protein-sequence-only scoring.
 
+## Stage 7 — Static ESM-2 Heat Map
+
+- **Static Matplotlib heat map (`outputs/heatmap.png`):** Rendered both the start region (`1–101`) and end region (`1631–1855`) on a fixed diverging `RdBu` scale (`vmin = -12.0`, `vmax = 12.0` centred at `0.0`) with white blank cells at each wild-type residue, overlaying `398` black `LOF` dots and `1,439` grey non-`LOF` (`FUNC`/`INT`) dots while omitting `outputs/heatmap.html` per Cut List item 4.
+- **RING zinc-coordinating site markers (Human Decision 8):** Marked RING positions `[24, 27, 39, 41, 44, 47, 61, 64]` above the start-region panel with the legend label `"zinc-holding letters (PDB 1JM7)"`.
+
+
 
