@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BRCA Spellcheck</title>
+<meta name="description" content="A prototype that checks a protein language model's calls on BRCA1 letter changes against lab measurements.">
+<script>document.documentElement.classList.add("js")</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --sunk: #e8ecf1;
+  --ink: #151a21;
+  --ink-2: #444d59;
+  --ink-3: #59626e;
+  --rule: #dbe0e6;
+  --rule-strong: #b6bec8;
+  --accent: #1f4a73;
+  --accent-2: #173a5b;
+  --accent-soft: #e2e9f0;
+  --harmful: #a3341f;
+  --harmful-soft: #f3e1dc;
+  --harmless: #2d6a4c;
+  --harmless-soft: #dfece4;
+  --cant: #7f5c12;
+  --cant-soft: #f2e8d2;
+  --slate: #3f4650;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 40px;
+  --s7: 64px;
+  --s8: 112px;
+  --radius: 10px;
+  --out: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+  --sans: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+  --wave: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='6' viewBox='0 0 12 6'><path d='M0 4 Q3 0 6 3.5 T12 4' fill='none' stroke='%23a3341f' stroke-width='1.6'/></svg>");
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: clip;
+  scroll-behavior: smooth;
+  scroll-padding-top: 72px;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 96px;
+}
+
+a {
+  color: var(--accent);
+}
+
+a:focus-visible, .btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 100;
+  background: var(--surface);
+  padding: var(--s2) var(--s3);
+}
+
+.skip:focus {
+  left: 8px;
+}
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(243, 245, 248, 0.86);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom: 1px solid var(--rule);
+}
+
+.bar-in {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--s3) var(--s5);
+  display: flex;
+  align-items: center;
+  gap: var(--s5);
+}
+
+.name {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.bar nav {
+  display: flex;
+  gap: var(--s5);
+  margin-left: auto;
+  font-size: 15px;
+}
+
+.bar nav a {
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.bar nav a:hover {
+  color: var(--ink);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #f7f8fa;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.btn:hover {
+  background: var(--accent-2);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 var(--s5);
+}
+
+.hero {
+  padding: var(--s7) 0 var(--s6);
+}
+
+.hero h1 {
+  font-size: clamp(40px, 6.6vw, 84px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  margin: 0 0 var(--s5);
+  max-width: 13em;
+}
+
+.lead {
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 38em;
+  margin: 0 0 var(--s6);
+}
+
+.seq {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7em 1px;
+  font-family: var(--mono);
+  font-size: clamp(17px, 2.5vw, 28px);
+  font-weight: 500;
+  line-height: 1;
+  padding-top: 0.9em;
+  margin: 0 0 var(--s4);
+}
+
+.lt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 1.08em;
+  height: 1.7em;
+  color: var(--ink);
+}
+
+.lt > i {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 0.1em;
+  height: 0.32em;
+  background: var(--wave) repeat-x left center / 0.5em 100%;
+  opacity: calc(0.04 + var(--h) * 0.96);
+  transform-origin: left center;
+}
+
+.lt.hit {
+  background: var(--surface);
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--rule-strong), 0 8px 20px -12px rgba(21, 26, 33, 0.35);
+}
+
+.lt.hit .old, .lt.hit .new, .aa.hit .old, .aa.hit .new {
+  grid-area: 1 / 1;
+  display: inline-block;
+}
+
+.lt.hit .old, .aa.hit .old {
+  position: relative;
+  color: var(--ink-3);
+  transform: translateY(-1.15em) scale(0.55);
+}
+
+.lt.hit .old::after, .aa.hit .old::after {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 52%;
+  height: 0.09em;
+  background: currentColor;
+}
+
+.cap {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-3);
+  max-width: 44em;
+  margin: 0 0 var(--s6);
+}
+
+.hero-cta {
+  display: flex;
+  align-items: center;
+  gap: var(--s5);
+  margin-bottom: var(--s6);
+}
+
+.hero-cta .btn {
+  font-size: 17px;
+  padding: 14px 26px;
+}
+
+.link {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.exam {
+  max-width: 40em;
+  color: var(--ink-2);
+  border-left: 2px solid var(--accent);
+  padding-left: var(--s4);
+  margin: 0;
+}
+
+.sec {
+  padding: var(--s8) 0 0;
+}
+
+.sec h2 {
+  font-size: clamp(32px, 4.4vw, 56px);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  margin: 0 0 var(--s4);
+  max-width: 18em;
+}
+
+.sec h2.big {
+  font-size: clamp(32px, 4.8vw, 60px);
+  max-width: 16em;
+}
+
+.sub {
+  font-size: 19px;
+  color: var(--ink-2);
+  max-width: 36em;
+  margin: 0 0 var(--s6);
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 240px;
+  gap: var(--s5);
+  align-items: center;
+  padding: var(--s5) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.steps .n {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--ink-3);
+  align-self: start;
+  padding-top: 4px;
+}
+
+.steps h3 {
+  font-size: 21px;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--s1);
+}
+
+.steps p {
+  margin: 0;
+  color: var(--ink-2);
+  max-width: 34em;
+}
+
+.dia svg {
+  width: 100%;
+  height: auto;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  overflow: visible;
+}
+
+.dia text {
+  fill: currentColor;
+}
+
+.pmap {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: var(--s6) var(--s5) var(--s5);
+}
+
+.rail {
+  position: relative;
+  height: 28px;
+}
+
+.rail i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+}
+
+.rail .body {
+  left: 0;
+  right: 0;
+  top: 10px;
+  bottom: 10px;
+  background: var(--sunk);
+  transform-origin: left center;
+}
+
+.rail .reg {
+  min-width: 6px;
+  transform-origin: left center;
+}
+
+.rail .tune {
+  background: var(--accent);
+}
+
+.rail .test {
+  background: var(--harmless);
+}
+
+.ticks {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: var(--s2);
+}
+
+.tags {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s5);
+  margin-top: var(--s5);
+}
+
+.tag {
+  font-size: 15px;
+  color: var(--ink-2);
+  padding-left: var(--s3);
+  border-left: 3px solid var(--accent);
+}
+
+.tag.test {
+  border-left-color: var(--harmless);
+}
+
+.tag b {
+  display: block;
+  color: var(--ink);
+  font-size: 17px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 267fr) minmax(0, 600fr);
+  gap: var(--s6);
+  margin-bottom: var(--s6);
+}
+
+.field {
+  margin: 0;
+}
+
+.field figcaption {
+  font-size: 15px;
+  color: var(--ink-2);
+  margin-bottom: var(--s3);
+}
+
+.field figcaption b {
+  font-family: var(--mono);
+  color: var(--ink);
+}
+
+.dots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 9px);
+  gap: 3px;
+}
+
+.dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.d-caught, .sw.d-caught {
+  background: var(--accent);
+}
+
+.d-missed, .sw.d-missed {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px var(--slate);
+}
+
+.d-alarm, .sw.d-alarm {
+  background: var(--slate);
+}
+
+.d-cleared, .sw.d-cleared {
+  background: #c9d0d8;
+}
+
+.key {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s5);
+  padding: 0;
+  margin: var(--s3) 0 0;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.key li {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.sw {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.lead2 {
+  font-size: 19px;
+  max-width: 36em;
+  margin: 0 0 var(--s5);
+}
+
+.tw {
+  overflow-x: auto;
+}
+
+.arms {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.arms th, .arms td {
+  padding: var(--s3) var(--s2);
+  border-bottom: 1px solid var(--rule);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.arms td {
+  font-family: var(--mono);
+  font-size: 14px;
+}
+
+.arms th:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+
+.arms thead th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--ink-3);
+  vertical-align: bottom;
+}
+
+.arms small {
+  display: block;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.arms tr.ours th, .arms tr.ours td {
+  background: var(--accent-soft);
+}
+
+.arms tr.ours th {
+  padding-left: var(--s2);
+}
+
+.fine {
+  font-size: 14px;
+  color: var(--ink-3);
+  max-width: 48em;
+}
+
+.cases {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s5);
+}
+
+.case {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: var(--s5);
+}
+
+.case h3 {
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  margin: var(--s4) 0 var(--s2);
+}
+
+.case p {
+  margin: 0 0 var(--s3);
+  color: var(--ink);
+}
+
+.case .guess {
+  color: var(--ink-2);
+  font-size: 15px;
+  margin: 0;
+}
+
+.strip {
+  display: flex;
+  gap: 2px;
+  padding: 0.95em 0 1.15em;
+  font-family: var(--mono);
+  font-size: clamp(18px, 2.6vw, 26px);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.aa {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 1.15em;
+  height: 1.55em;
+  color: var(--ink-3);
+}
+
+.aa.hit {
+  color: var(--ink);
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--rule-strong);
+}
+
+.aa.hit > i {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 0.08em;
+  height: 0.3em;
+  transform-origin: left center;
+}
+
+.k-harmful > i {
+  background: var(--wave) repeat-x left center / 0.5em 100%;
+}
+
+.k-harmless > i {
+  height: 2px !important;
+  bottom: 0.18em !important;
+  background: var(--harmless);
+}
+
+.pos {
+  position: absolute;
+  top: 100%;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.heat {
+  margin: 0;
+}
+
+.heat img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+.heat figcaption {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-top: var(--s3);
+  max-width: 48em;
+}
+
+.limits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--s7);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s5);
+}
+
+.limits h3 {
+  font-size: 19px;
+  margin: 0 0 var(--s2);
+}
+
+.limits p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 16px;
+}
+
+.credits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s5) var(--s6);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--rule);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.credits h3 {
+  font-size: 15px;
+  margin: 0 0 var(--s2);
+  color: var(--ink);
+}
+
+.credits ul {
+  margin: 0;
+  padding-left: 1.1em;
+}
+
+.credits li {
+  margin-bottom: var(--s1);
+}
+
+.notes {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: rgba(243, 245, 248, 0.94);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--rule-strong);
+}
+
+.notes-in {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--s2) var(--s5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--s4);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.notes-in b {
+  color: var(--ink);
+}
+
+@media (max-width: 860px) {
+  .bar nav {
+    display: none;
+  }
+  .bar .btn {
+    margin-left: auto;
+  }
+  .steps li {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+  .steps .dia {
+    grid-column: 2;
+    max-width: 260px;
+  }
+  .fields, .cases, .tags, .limits, .credits {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  body {
+    font-size: 16px;
+    padding-bottom: 120px;
+  }
+  main, .bar-in, .notes-in {
+    padding-left: var(--s4);
+    padding-right: var(--s4);
+  }
+  .hero {
+    padding-top: var(--s7);
+  }
+  .sec {
+    padding-top: var(--s7);
+  }
+  .sub, .lead2 {
+    font-size: 17px;
+  }
+  .hero-cta {
+    flex-wrap: wrap;
+  }
+  .arms {
+    font-size: 13px;
+  }
+  .arms td {
+    font-size: 12.5px;
+  }
+  .arms th, .arms td {
+    padding: var(--s2) 3px;
+  }
+  .notes-in {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.js .lt {
+    animation: lt-in 500ms var(--out) both;
+    animation-delay: calc(var(--i) * 9ms + 120ms);
+  }
+
+  html.js .lt > i {
+    animation: draw-x 420ms var(--out) both;
+    animation-delay: calc(var(--i) * 11ms + 1000ms);
+  }
+
+  html.js .lt.hit {
+    animation: lt-in 500ms var(--out) both, lift 600ms var(--out) 2250ms both;
+    animation-delay: calc(var(--i) * 9ms + 120ms), 2250ms;
+  }
+
+  html.js .lt.hit .old {
+    animation: old-out 560ms var(--out) 2500ms both;
+  }
+
+  html.js .lt.hit .old::after {
+    animation: draw-x 240ms var(--out) 2350ms both;
+  }
+
+  html.js .lt.hit .new {
+    animation: new-in 600ms var(--spring) 2750ms both;
+  }
+
+  html.js .hero .cap, html.js .hero-cta, html.js .hero .exam {
+    animation: fade 700ms var(--out) both;
+  }
+
+  html.js .hero .cap { animation-delay: 2900ms; }
+  html.js .hero-cta { animation-delay: 1500ms; }
+  html.js .hero .exam { animation-delay: 1700ms; }
+
+  html.js [data-anim] .pc {
+    opacity: 0;
+    transform: translateY(8px);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  html.js [data-anim] .pc.grow {
+    transform: scaleY(0);
+    transform-origin: center bottom;
+  }
+
+  html.js [data-anim] .pc.wipe {
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  html.js [data-anim] .pc.drop {
+    transform: translateY(-12px);
+  }
+
+  html.js [data-anim].in .pc {
+    opacity: 1;
+    transform: none;
+    transition: opacity 500ms var(--out), transform 700ms var(--spring);
+    transition-delay: calc(var(--j) * 90ms + 150ms);
+  }
+
+  html.js .pmap .body, html.js .pmap .reg {
+    transform: scaleX(0);
+  }
+
+  html.js .pmap.in .body {
+    transform: none;
+    transition: transform 1000ms var(--out) 100ms;
+  }
+
+  html.js .pmap.in .reg.tune {
+    transform: none;
+    transition: transform 500ms var(--out) 700ms;
+  }
+
+  html.js .pmap.in .reg.test {
+    transform: none;
+    transition: transform 800ms var(--out) 1000ms;
+  }
+
+  html.js .pmap .tag {
+    opacity: 0;
+  }
+
+  html.js .pmap.in .tag {
+    opacity: 1;
+    transition: opacity 600ms var(--out) 1300ms;
+  }
+
+  html.js .dots i {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  html.js .dots.in i {
+    opacity: 1;
+    transform: none;
+    transition: opacity 300ms var(--out), transform 400ms var(--spring);
+    transition-delay: calc(var(--i) * 1.6ms);
+  }
+
+  html.js .strip .hit .old {
+    transform: none;
+    color: var(--ink);
+  }
+
+  html.js .strip .hit .old::after {
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  html.js .strip .hit .new {
+    opacity: 0;
+    transform: translateY(0.6em);
+  }
+
+  html.js .strip .hit > i {
+    transform: scaleX(0);
+  }
+
+  html.js .strip.in .hit .old::after {
+    transform: none;
+    transition: transform 240ms var(--out) 300ms;
+  }
+
+  html.js .strip.in .hit .old {
+    transform: translateY(-1.15em) scale(0.55);
+    color: var(--ink-3);
+    transition: transform 560ms var(--out) 500ms, color 560ms var(--out) 500ms;
+  }
+
+  html.js .strip.in .hit .new {
+    opacity: 1;
+    transform: none;
+    transition: opacity 400ms var(--out) 750ms, transform 600ms var(--spring) 750ms;
+  }
+
+  html.js .strip.in .hit > i {
+    transform: none;
+    transition: transform 500ms var(--out) 1150ms;
+  }
+
+  html.js .heat img {
+    clip-path: inset(0 100% 0 0 round 10px);
+  }
+
+  html.js .heat.in img {
+    clip-path: inset(0 0 0 0 round 10px);
+    transition: clip-path 1200ms var(--out) 100ms;
+  }
+}
+
+@keyframes lt-in {
+  from { opacity: 0; transform: translateY(0.4em); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes draw-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes lift {
+  from { box-shadow: inset 0 0 0 1px transparent; background: transparent; }
+  to { box-shadow: inset 0 0 0 1px var(--rule-strong), 0 8px 20px -12px rgba(21, 26, 33, 0.35); background: var(--surface); }
+}
+
+@keyframes old-out {
+  from { transform: none; color: var(--ink); }
+  to { transform: translateY(-1.15em) scale(0.55); color: var(--ink-3); }
+}
+
+@keyframes new-in {
+  from { opacity: 0; transform: translateY(0.6em) scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lt::before {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #f3f5f8;
+  background: var(--ink);
+  border-radius: 8px;
+  white-space: normal;
+  pointer-events: none;
+  display: none;
+  transform: translate(-50%, 0);
+  z-index: 5;
+}
+
+.lt:hover::before {
+  display: block;
+  animation: tip 150ms ease both;
+}
+
+@keyframes tip {
+  from { opacity: 0; translate: 0 4px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+.lt:hover {
+  color: var(--accent);
+}
+
+.lt:hover > i {
+  opacity: 1;
+}
+
+.lt.hit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tick {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+@media (hover: none) {
+  .lt::before {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.js .lt {
+    animation: lt-in 500ms var(--out) both, bob 760ms var(--out) both;
+    animation-delay: calc(var(--i) * 9ms + 120ms), var(--rd, 2900ms);
+  }
+
+  html.js .lt.hit {
+    animation: lt-in 500ms var(--out) both, lift 600ms var(--out) both;
+    animation-delay: calc(var(--i) * 9ms + 120ms), 2250ms;
+  }
+
+  html.js .lt.hit::after {
+    animation: ring 1100ms var(--out) 2850ms backwards;
+  }
+}
+
+@keyframes bob {
+  0% { translate: 0 0; }
+  35% { translate: 0 -0.22em; }
+  100% { translate: 0 0; }
+}
+
+@keyframes ring {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(5.5); }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="bar">
+  <div class="bar-in">
+    <a class="name" href="#top">BRCA Spellcheck</a>
+    <nav aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#results">Results</a>
+      <a href="#fails">Where it fails</a>
+      <a href="#limits">Limits</a>
+    </nav>
+    <a class="btn" href="http://127.0.0.1:7861/">Try the demo</a>
+  </div>
+</header>
+<main id="main">
+<section class="hero" id="top">
+  <h1>A spellchecker for proteins, graded against the lab.</h1>
+  <p class="lead">BRCA1 is written in 1,863 letters, one per amino acid. We asked a protein language model which single-letter changes look like typos, then checked its calls against 1,837 lab measurements.</p>
+  <div class="seq" role="img" aria-label="BRCA1 positions 1 to 101: MDLSALRVEEVQNVINAMQKILECPICLELIKEPVSTKCDHIFCKFCMLKLLNQKKGPSQCPLCKNDITKRSLQESTRFSQLVEELLKIICAFQLDTGLEY. The cysteine at position 61 is replaced by glycine."><span class="lt" style="--i:0;--h:0.579" data-tip="Position 1 (M). Changes here look more harmful than at 78% of these positions.">M<i></i></span><span class="lt" style="--i:1;--h:0.036" data-tip="Position 2 (D). Changes here look more harmful than at 22% of these positions.">D<i></i></span><span class="lt" style="--i:2;--h:0.000" data-tip="Position 3 (L). Changes here look more harmful than at 2% of these positions.">L<i></i></span><span class="lt" style="--i:3;--h:0.013" data-tip="Position 4 (S). Changes here look more harmful than at 14% of these positions.">S<i></i></span><span class="lt" style="--i:4;--h:0.000" data-tip="Position 5 (A). Changes here look more harmful than at 3% of these positions.">A<i></i></span><span class="lt" style="--i:5;--h:0.000" data-tip="Position 6 (L). Changes here look more harmful than at 1% of these positions.">L<i></i></span><span class="lt" style="--i:6;--h:0.001" data-tip="Position 7 (R). Changes here look more harmful than at 5% of these positions.">R<i></i></span><span class="lt" style="--i:7;--h:0.008" data-tip="Position 8 (V). Changes here look more harmful than at 11% of these positions.">V<i></i></span><span class="lt" style="--i:8;--h:0.018" data-tip="Position 9 (E). Changes here look more harmful than at 16% of these positions.">E<i></i></span><span class="lt" style="--i:9;--h:0.003" data-tip="Position 10 (E). Changes here look more harmful than at 7% of these positions.">E<i></i></span><span class="lt" style="--i:10;--h:0.029" data-tip="Position 11 (V). Changes here look more harmful than at 20% of these positions.">V<i></i></span><span class="lt" style="--i:11;--h:0.001" data-tip="Position 12 (Q). Changes here look more harmful than at 4% of these positions.">Q<i></i></span><span class="lt" style="--i:12;--h:0.006" data-tip="Position 13 (N). Changes here look more harmful than at 10% of these positions.">N<i></i></span><span class="lt" style="--i:13;--h:0.043" data-tip="Position 14 (V). Changes here look more harmful than at 24% of these positions.">V<i></i></span><span class="lt" style="--i:14;--h:0.106" data-tip="Position 15 (I). Changes here look more harmful than at 36% of these positions.">I<i></i></span><span class="lt" style="--i:15;--h:0.009" data-tip="Position 16 (N). Changes here look more harmful than at 12% of these positions.">N<i></i></span><span class="lt" style="--i:16;--h:0.002" data-tip="Position 17 (A). Changes here look more harmful than at 6% of these positions.">A<i></i></span><span class="lt" style="--i:17;--h:0.173" data-tip="Position 18 (M). Changes here look more harmful than at 45% of these positions.">M<i></i></span><span class="lt" style="--i:18;--h:0.071" data-tip="Position 19 (Q). Changes here look more harmful than at 30% of these positions.">Q<i></i></span><span class="lt" style="--i:19;--h:0.164" data-tip="Position 20 (K). Changes here look more harmful than at 44% of these positions.">K<i></i></span><span class="lt" style="--i:20;--h:0.066" data-tip="Position 21 (I). Changes here look more harmful than at 29% of these positions.">I<i></i></span><span class="lt" style="--i:21;--h:0.401" data-tip="Position 22 (L). Changes here look more harmful than at 66% of these positions.">L<i></i></span><span class="lt" style="--i:22;--h:0.112" data-tip="Position 23 (E). Changes here look more harmful than at 37% of these positions.">E<i></i></span><span class="lt" style="--i:23;--h:0.813" data-tip="Position 24 (C). Changes here look more harmful than at 91% of these positions.">C<i></i></span><span class="lt" style="--i:24;--h:0.199" data-tip="Position 25 (P). Changes here look more harmful than at 48% of these positions.">P<i></i></span><span class="lt" style="--i:25;--h:0.832" data-tip="Position 26 (I). Changes here look more harmful than at 92% of these positions.">I<i></i></span><span class="lt" style="--i:26;--h:0.681" data-tip="Position 27 (C). Changes here look more harmful than at 84% of these positions.">C<i></i></span><span class="lt" style="--i:27;--h:0.471" data-tip="Position 28 (L). Changes here look more harmful than at 71% of these positions.">L<i></i></span><span class="lt" style="--i:28;--h:0.237" data-tip="Position 29 (E). Changes here look more harmful than at 52% of these positions.">E<i></i></span><span class="lt" style="--i:29;--h:0.190" data-tip="Position 30 (L). Changes here look more harmful than at 47% of these positions.">L<i></i></span><span class="lt" style="--i:30;--h:0.181" data-tip="Position 31 (I). Changes here look more harmful than at 46% of these positions.">I<i></i></span><span class="lt" style="--i:31;--h:0.156" data-tip="Position 32 (K). Changes here look more harmful than at 43% of these positions.">K<i></i></span><span class="lt" style="--i:32;--h:0.388" data-tip="Position 33 (E). Changes here look more harmful than at 65% of these positions.">E<i></i></span><span class="lt" style="--i:33;--h:0.736" data-tip="Position 34 (P). Changes here look more harmful than at 87% of these positions.">P<i></i></span><span class="lt" style="--i:34;--h:0.664" data-tip="Position 35 (V). Changes here look more harmful than at 83% of these positions.">V<i></i></span><span class="lt" style="--i:35;--h:0.208" data-tip="Position 36 (S). Changes here look more harmful than at 49% of these positions.">S<i></i></span><span class="lt" style="--i:36;--h:0.774" data-tip="Position 37 (T). Changes here look more harmful than at 89% of these positions.">T<i></i></span><span class="lt" style="--i:37;--h:0.485" data-tip="Position 38 (K). Changes here look more harmful than at 72% of these positions.">K<i></i></span><span class="lt" style="--i:38;--h:0.978" data-tip="Position 39 (C). Changes here look more harmful than at 99% of these positions.">C<i></i></span><span class="lt" style="--i:39;--h:0.755" data-tip="Position 40 (D). Changes here look more harmful than at 88% of these positions.">D<i></i></span><span class="lt" style="--i:40;--h:0.957" data-tip="Position 41 (H). Changes here look more harmful than at 98% of these positions.">H<i></i></span><span class="lt" style="--i:41;--h:0.015" data-tip="Position 42 (I). Changes here look more harmful than at 15% of these positions.">I<i></i></span><span class="lt" style="--i:42;--h:0.935" data-tip="Position 43 (F). Changes here look more harmful than at 97% of these positions.">F<i></i></span><span class="lt" style="--i:43;--h:0.699" data-tip="Position 44 (C). Changes here look more harmful than at 85% of these positions.">C<i></i></span><span class="lt" style="--i:44;--h:0.268" data-tip="Position 45 (K). Changes here look more harmful than at 55% of these positions.">K<i></i></span><span class="lt" style="--i:45;--h:0.531" data-tip="Position 46 (F). Changes here look more harmful than at 75% of these positions.">F<i></i></span><span class="lt" style="--i:46;--h:0.873" data-tip="Position 47 (C). Changes here look more harmful than at 94% of these positions.">C<i></i></span><span class="lt" style="--i:47;--h:0.893" data-tip="Position 48 (M). Changes here look more harmful than at 95% of these positions.">M<i></i></span><span class="lt" style="--i:48;--h:0.414" data-tip="Position 49 (L). Changes here look more harmful than at 67% of these positions.">L<i></i></span><span class="lt" style="--i:49;--h:0.793" data-tip="Position 50 (K). Changes here look more harmful than at 90% of these positions.">K<i></i></span><span class="lt" style="--i:50;--h:0.595" data-tip="Position 51 (L). Changes here look more harmful than at 79% of these positions.">L<i></i></span><span class="lt" style="--i:51;--h:0.718" data-tip="Position 52 (L). Changes here look more harmful than at 86% of these positions.">L<i></i></span><span class="lt" style="--i:52;--h:0.227" data-tip="Position 53 (N). Changes here look more harmful than at 51% of these positions.">N<i></i></span><span class="lt" style="--i:53;--h:0.442" data-tip="Position 54 (Q). Changes here look more harmful than at 69% of these positions.">Q<i></i></span><span class="lt" style="--i:54;--h:0.612" data-tip="Position 55 (K). Changes here look more harmful than at 80% of these positions.">K<i></i></span><span class="lt" style="--i:55;--h:0.218" data-tip="Position 56 (K). Changes here look more harmful than at 50% of these positions.">K<i></i></span><span class="lt" style="--i:56;--h:0.646" data-tip="Position 57 (G). Changes here look more harmful than at 82% of these positions.">G<i></i></span><span class="lt" style="--i:57;--h:0.141" data-tip="Position 58 (P). Changes here look more harmful than at 41% of these positions.">P<i></i></span><span class="lt" style="--i:58;--h:0.302" data-tip="Position 59 (S). Changes here look more harmful than at 58% of these positions.">S<i></i></span><span class="lt" style="--i:59;--h:0.099" data-tip="Position 60 (Q). Changes here look more harmful than at 35% of these positions.">Q<i></i></span><span class="lt hit" style="--i:60;--h:1.000" data-tip="Position 61 (C). Changes here look more harmful than at 100% of these positions."><span class="old">C</span><span class="new">G</span><i></i></span><span class="lt" style="--i:61;--h:0.852" data-tip="Position 62 (P). Changes here look more harmful than at 93% of these positions.">P<i></i></span><span class="lt" style="--i:62;--h:0.428" data-tip="Position 63 (L). Changes here look more harmful than at 68% of these positions.">L<i></i></span><span class="lt" style="--i:63;--h:0.914" data-tip="Position 64 (C). Changes here look more harmful than at 96% of these positions.">C<i></i></span><span class="lt" style="--i:64;--h:0.547" data-tip="Position 65 (K). Changes here look more harmful than at 76% of these positions.">K<i></i></span><span class="lt" style="--i:65;--h:0.020" data-tip="Position 66 (N). Changes here look more harmful than at 17% of these positions.">N<i></i></span><span class="lt" style="--i:66;--h:0.082" data-tip="Position 67 (D). Changes here look more harmful than at 32% of these positions.">D<i></i></span><span class="lt" style="--i:67;--h:0.563" data-tip="Position 68 (I). Changes here look more harmful than at 77% of these positions.">I<i></i></span><span class="lt" style="--i:68;--h:0.500" data-tip="Position 69 (T). Changes here look more harmful than at 73% of these positions.">T<i></i></span><span class="lt" style="--i:69;--h:0.375" data-tip="Position 70 (K). Changes here look more harmful than at 64% of these positions.">K<i></i></span><span class="lt" style="--i:70;--h:0.516" data-tip="Position 71 (R). Changes here look more harmful than at 74% of these positions.">R<i></i></span><span class="lt" style="--i:71;--h:0.337" data-tip="Position 72 (S). Changes here look more harmful than at 61% of these positions.">S<i></i></span><span class="lt" style="--i:72;--h:0.629" data-tip="Position 73 (L). Changes here look more harmful than at 81% of these positions.">L<i></i></span><span class="lt" style="--i:73;--h:0.258" data-tip="Position 74 (Q). Changes here look more harmful than at 54% of these positions.">Q<i></i></span><span class="lt" style="--i:74;--h:0.349" data-tip="Position 75 (E). Changes here look more harmful than at 62% of these positions.">E<i></i></span><span class="lt" style="--i:75;--h:0.279" data-tip="Position 76 (S). Changes here look more harmful than at 56% of these positions.">S<i></i></span><span class="lt" style="--i:76;--h:0.011" data-tip="Position 77 (T). Changes here look more harmful than at 13% of these positions.">T<i></i></span><span class="lt" style="--i:77;--h:0.133" data-tip="Position 78 (R). Changes here look more harmful than at 40% of these positions.">R<i></i></span><span class="lt" style="--i:78;--h:0.313" data-tip="Position 79 (F). Changes here look more harmful than at 59% of these positions.">F<i></i></span><span class="lt" style="--i:79;--h:0.047" data-tip="Position 80 (S). Changes here look more harmful than at 25% of these positions.">S<i></i></span><span class="lt" style="--i:80;--h:0.061" data-tip="Position 81 (Q). Changes here look more harmful than at 28% of these positions.">Q<i></i></span><span class="lt" style="--i:81;--h:0.247" data-tip="Position 82 (L). Changes here look more harmful than at 53% of these positions.">L<i></i></span><span class="lt" style="--i:82;--h:0.456" data-tip="Position 83 (V). Changes here look more harmful than at 70% of these positions.">V<i></i></span><span class="lt" style="--i:83;--h:0.093" data-tip="Position 84 (E). Changes here look more harmful than at 34% of these positions.">E<i></i></span><span class="lt" style="--i:84;--h:0.126" data-tip="Position 85 (E). Changes here look more harmful than at 39% of these positions.">E<i></i></span><span class="lt" style="--i:85;--h:0.362" data-tip="Position 86 (L). Changes here look more harmful than at 63% of these positions.">L<i></i></span><span class="lt" style="--i:86;--h:0.026" data-tip="Position 87 (L). Changes here look more harmful than at 19% of these positions.">L<i></i></span><span class="lt" style="--i:87;--h:0.032" data-tip="Position 88 (K). Changes here look more harmful than at 21% of these positions.">K<i></i></span><span class="lt" style="--i:88;--h:0.119" data-tip="Position 89 (I). Changes here look more harmful than at 38% of these positions.">I<i></i></span><span class="lt" style="--i:89;--h:0.148" data-tip="Position 90 (I). Changes here look more harmful than at 42% of these positions.">I<i></i></span><span class="lt" style="--i:90;--h:0.000" data-tip="Position 91 (C). Changes here look more harmful than at 0% of these positions.">C<i></i></span><span class="lt" style="--i:91;--h:0.052" data-tip="Position 92 (A). Changes here look more harmful than at 26% of these positions.">A<i></i></span><span class="lt" style="--i:92;--h:0.325" data-tip="Position 93 (F). Changes here look more harmful than at 60% of these positions.">F<i></i></span><span class="lt" style="--i:93;--h:0.076" data-tip="Position 94 (Q). Changes here look more harmful than at 31% of these positions.">Q<i></i></span><span class="lt" style="--i:94;--h:0.023" data-tip="Position 95 (L). Changes here look more harmful than at 18% of these positions.">L<i></i></span><span class="lt" style="--i:95;--h:0.056" data-tip="Position 96 (D). Changes here look more harmful than at 27% of these positions.">D<i></i></span><span class="lt" style="--i:96;--h:0.087" data-tip="Position 97 (T). Changes here look more harmful than at 33% of these positions.">T<i></i></span><span class="lt" style="--i:97;--h:0.290" data-tip="Position 98 (G). Changes here look more harmful than at 57% of these positions.">G<i></i></span><span class="lt" style="--i:98;--h:0.039" data-tip="Position 99 (L). Changes here look more harmful than at 23% of these positions.">L<i></i></span><span class="lt" style="--i:99;--h:0.005" data-tip="Position 100 (E). Changes here look more harmful than at 9% of these positions.">E<i></i></span><span class="lt" style="--i:100;--h:0.004" data-tip="Position 101 (Y). Changes here look more harmful than at 8% of these positions.">Y<i></i></span></div>
+  <p class="cap">The first 101 letters of BRCA1. The red underline marks how harmful the model finds changes at each position, on average across all 19 possible swaps. Darker means more harmful, compared with the other positions here. Then C61G: the C at position 61 becomes a G. In the lab C61G scored −1.738, well into broken. The model's score was −10.50.</p>
+  <div class="hero-cta"><a class="btn" href="http://127.0.0.1:7861/">Try the demo</a><a class="link" href="#results">See the results</a></div>
+  <p class="exam">BRCA1 is our exam, not the use case. It is one of the few genes with a lab answer key, so we can check the model here before anyone trusts this kind of model on a gene without one.</p>
+</section>
+
+<section class="sec" id="how">
+  <h2>Four steps, no training.</h2>
+  <p class="sub">The model never saw a lab label. It only learned which letters tend to sit where in natural proteins. We borrowed the lab's answers to grade it.</p>
+  <ol class="steps"><li data-anim><span class="n">1</span><div><h3>Hide one letter</h3><p>We give ESM-2, a protein language model, a 500-letter stretch of BRCA1 with one position blanked out, and ask how likely each of the 20 amino acids is to belong there.</p></div><div class="dia"><svg viewBox="0 0 220 64" aria-hidden="true"><g class="pc" style="--j:0"><rect x="4" y="16" width="26" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1.25"/><text x="17" y="36" text-anchor="middle">P</text></g><g class="pc" style="--j:1"><rect x="34" y="16" width="26" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1.25"/><text x="47" y="36" text-anchor="middle">S</text></g><g class="pc" style="--j:2"><rect x="64" y="16" width="26" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1.25"/><text x="77" y="36" text-anchor="middle">Q</text></g><g class="pc" style="--j:3"><rect x="94" y="16" width="26" height="30" rx="5" fill="var(--accent-soft)" stroke="currentColor" stroke-width="1.25" stroke-dasharray=&quot;3 3&quot;/><text x="107" y="36" text-anchor="middle">?</text></g><g class="pc" style="--j:4"><rect x="124" y="16" width="26" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1.25"/><text x="137" y="36" text-anchor="middle">P</text></g><g class="pc" style="--j:5"><rect x="154" y="16" width="26" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1.25"/><text x="167" y="36" text-anchor="middle">L</text></g><g class="pc" style="--j:6"><rect x="184" y="16" width="26" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1.25"/><text x="197" y="36" text-anchor="middle">C</text></g></svg></div></li><li data-anim><span class="n">2</span><div><h3>Compare the old and new letter</h3><p>The score is log P(new) minus log P(old). Below zero means the new letter surprises the model more than the one nature put there. C61G scores −10.50.</p></div><div class="dia"><svg viewBox="0 0 220 64" aria-hidden="true"><line class="pc" style="--j:0" x1="10" y1="54" x2="210" y2="54" stroke="currentColor"/><rect class="pc grow" style="--j:1" x="40" y="14" width="40" height="40" rx="2" fill="var(--harmless-soft)" stroke="var(--harmless)" stroke-width="1.25"/><rect class="pc grow" style="--j:3" x="130" y="46" width="40" height="8" rx="2" fill="var(--harmful-soft)" stroke="var(--harmful)" stroke-width="1.25"/><text class="pc" style="--j:2" x="60" y="9" text-anchor="middle">C</text><text class="pc" style="--j:4" x="150" y="40" text-anchor="middle">G</text></svg></div></li><li data-anim><span class="n">3</span><div><h3>Draw two lines on the start region</h3><p>On positions 1–101 we set one line to still catch at least 90% of the 131 harmful mutations, and another to flag at most 10% of the 385 harmless ones. Between the lines the model says it can't tell.</p></div><div class="dia"><svg viewBox="0 0 220 64" aria-hidden="true"><g class="pc wipe" style="--j:0"><rect x="6" y="26" width="80" height="10" fill="var(--harmful-soft)"/><rect x="86" y="26" width="40" height="10" fill="var(--cant-soft)"/><rect x="126" y="26" width="88" height="10" fill="var(--harmless-soft)"/></g><g class="pc drop" style="--j:4"><line x1="86" y1="16" x2="86" y2="46" stroke="currentColor" stroke-dasharray="3 3"/><text x="86" y="60" text-anchor="middle">B</text></g><g class="pc drop" style="--j:6"><line x1="126" y1="16" x2="126" y2="46" stroke="currentColor" stroke-dasharray="3 3"/><text x="126" y="60" text-anchor="middle">A</text></g></svg></div></li><li data-anim><span class="n">4</span><div><h3>Grade once on the end region</h3><p>Then we froze both lines and scored positions 1631–1855 one time against the lab. The results below are that single run, mistakes included.</p></div><div class="dia"><svg viewBox="0 0 220 64" aria-hidden="true"><g class="pc" style="--j:0"><rect x="6" y="20" width="60" height="24" rx="5" fill="none" stroke="currentColor" stroke-width="1.25"/><text x="36" y="36" text-anchor="middle">1–101</text></g><g class="pc wipe" style="--j:2"><path d="M72 32h50M116 27l7 5-7 5" stroke="currentColor" stroke-width="1.25" fill="none"/></g><g class="pc" style="--j:5"><rect x="128" y="20" width="86" height="24" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.25"/><text x="171" y="36" text-anchor="middle">1631–1855</text></g></svg></div></li></ol>
+</section>
+
+<section class="sec" id="exam">
+  <h2>Tune on one end. Test on the other, once.</h2>
+  <p class="sub">We never split mutations at random. Every cutoff was set at the start of the protein, frozen, and then used one time on the far end.</p>
+  <figure class="pmap" data-anim role="img" aria-label="BRCA1 is 1863 letters long. We tuned on positions 1 to 101 and tested once on 1631 to 1855."><div class="rail"><i class="body"></i><i class="reg tune" style="left:0.00%;width:5.37%"></i><i class="reg test" style="left:87.54%;width:12.03%"></i></div><div class="ticks"><span>1</span><span>1,863</span></div><div class="tags"><div class="tag tune"><b>Tuned here</b>Positions 1–101, the RING region. 131 harmful and 385 harmless in the lab.</div><div class="tag test"><b>Tested once</b>Positions 1631–1855, the BRCT region. 267 harmful and 899 harmless in the lab.</div></div></figure>
+</section>
+
+<section class="sec" id="results">
+  <h2 class="big">To catch 94.4% of harmful mutations, the model also flagged 437 of 899 harmless ones.</h2>
+  <p class="sub">That is the held-out end region, scored once. Each dot is one mutation the lab gave a clear answer for.</p>
+  <div class="fields"><figure class="field"><figcaption><b>267</b> mutations the lab found harmful</figcaption><div class="dots" data-anim role="img" aria-label="252 caught, 15 missed"><i class="d-caught" style="--i:0"></i><i class="d-caught" style="--i:1"></i><i class="d-caught" style="--i:2"></i><i class="d-caught" style="--i:3"></i><i class="d-caught" style="--i:4"></i><i class="d-caught" style="--i:5"></i><i class="d-caught" style="--i:6"></i><i class="d-caught" style="--i:7"></i><i class="d-caught" style="--i:8"></i><i class="d-caught" style="--i:9"></i><i class="d-caught" style="--i:10"></i><i class="d-caught" style="--i:11"></i><i class="d-caught" style="--i:12"></i><i class="d-caught" style="--i:13"></i><i class="d-caught" style="--i:14"></i><i class="d-caught" style="--i:15"></i><i class="d-caught" style="--i:16"></i><i class="d-caught" style="--i:17"></i><i class="d-caught" style="--i:18"></i><i class="d-caught" style="--i:19"></i><i class="d-caught" style="--i:20"></i><i class="d-caught" style="--i:21"></i><i class="d-caught" style="--i:22"></i><i class="d-caught" style="--i:23"></i><i class="d-caught" style="--i:24"></i><i class="d-caught" style="--i:25"></i><i class="d-caught" style="--i:26"></i><i class="d-caught" style="--i:27"></i><i class="d-caught" style="--i:28"></i><i class="d-caught" style="--i:29"></i><i class="d-caught" style="--i:30"></i><i class="d-caught" style="--i:31"></i><i class="d-caught" style="--i:32"></i><i class="d-caught" style="--i:33"></i><i class="d-caught" style="--i:34"></i><i class="d-caught" style="--i:35"></i><i class="d-caught" style="--i:36"></i><i class="d-caught" style="--i:37"></i><i class="d-caught" style="--i:38"></i><i class="d-caught" style="--i:39"></i><i class="d-caught" style="--i:40"></i><i class="d-caught" style="--i:41"></i><i class="d-caught" style="--i:42"></i><i class="d-caught" style="--i:43"></i><i class="d-caught" style="--i:44"></i><i class="d-caught" style="--i:45"></i><i class="d-caught" style="--i:46"></i><i class="d-caught" style="--i:47"></i><i class="d-caught" style="--i:48"></i><i class="d-caught" style="--i:49"></i><i class="d-caught" style="--i:50"></i><i class="d-caught" style="--i:51"></i><i class="d-caught" style="--i:52"></i><i class="d-caught" style="--i:53"></i><i class="d-caught" style="--i:54"></i><i class="d-caught" style="--i:55"></i><i class="d-caught" style="--i:56"></i><i class="d-caught" style="--i:57"></i><i class="d-caught" style="--i:58"></i><i class="d-caught" style="--i:59"></i><i class="d-caught" style="--i:60"></i><i class="d-caught" style="--i:61"></i><i class="d-caught" style="--i:62"></i><i class="d-caught" style="--i:63"></i><i class="d-caught" style="--i:64"></i><i class="d-caught" style="--i:65"></i><i class="d-caught" style="--i:66"></i><i class="d-caught" style="--i:67"></i><i class="d-caught" style="--i:68"></i><i class="d-caught" style="--i:69"></i><i class="d-caught" style="--i:70"></i><i class="d-caught" style="--i:71"></i><i class="d-caught" style="--i:72"></i><i class="d-caught" style="--i:73"></i><i class="d-caught" style="--i:74"></i><i class="d-caught" style="--i:75"></i><i class="d-caught" style="--i:76"></i><i class="d-caught" style="--i:77"></i><i class="d-caught" style="--i:78"></i><i class="d-caught" style="--i:79"></i><i class="d-caught" style="--i:80"></i><i class="d-caught" style="--i:81"></i><i class="d-caught" style="--i:82"></i><i class="d-caught" style="--i:83"></i><i class="d-caught" style="--i:84"></i><i class="d-caught" style="--i:85"></i><i class="d-caught" style="--i:86"></i><i class="d-caught" style="--i:87"></i><i class="d-caught" style="--i:88"></i><i class="d-caught" style="--i:89"></i><i class="d-caught" style="--i:90"></i><i class="d-caught" style="--i:91"></i><i class="d-caught" style="--i:92"></i><i class="d-caught" style="--i:93"></i><i class="d-caught" style="--i:94"></i><i class="d-caught" style="--i:95"></i><i class="d-caught" style="--i:96"></i><i class="d-caught" style="--i:97"></i><i class="d-caught" style="--i:98"></i><i class="d-caught" style="--i:99"></i><i class="d-caught" style="--i:100"></i><i class="d-caught" style="--i:101"></i><i class="d-caught" style="--i:102"></i><i class="d-caught" style="--i:103"></i><i class="d-caught" style="--i:104"></i><i class="d-caught" style="--i:105"></i><i class="d-caught" style="--i:106"></i><i class="d-caught" style="--i:107"></i><i class="d-caught" style="--i:108"></i><i class="d-caught" style="--i:109"></i><i class="d-caught" style="--i:110"></i><i class="d-caught" style="--i:111"></i><i class="d-caught" style="--i:112"></i><i class="d-caught" style="--i:113"></i><i class="d-caught" style="--i:114"></i><i class="d-caught" style="--i:115"></i><i class="d-caught" style="--i:116"></i><i class="d-caught" style="--i:117"></i><i class="d-caught" style="--i:118"></i><i class="d-caught" style="--i:119"></i><i class="d-caught" style="--i:120"></i><i class="d-caught" style="--i:121"></i><i class="d-caught" style="--i:122"></i><i class="d-caught" style="--i:123"></i><i class="d-caught" style="--i:124"></i><i class="d-caught" style="--i:125"></i><i class="d-caught" style="--i:126"></i><i class="d-caught" style="--i:127"></i><i class="d-caught" style="--i:128"></i><i class="d-caught" style="--i:129"></i><i class="d-caught" style="--i:130"></i><i class="d-caught" style="--i:131"></i><i class="d-caught" style="--i:132"></i><i class="d-caught" style="--i:133"></i><i class="d-caught" style="--i:134"></i><i class="d-caught" style="--i:135"></i><i class="d-caught" style="--i:136"></i><i class="d-caught" style="--i:137"></i><i class="d-caught" style="--i:138"></i><i class="d-caught" style="--i:139"></i><i class="d-caught" style="--i:140"></i><i class="d-caught" style="--i:141"></i><i class="d-caught" style="--i:142"></i><i class="d-caught" style="--i:143"></i><i class="d-caught" style="--i:144"></i><i class="d-caught" style="--i:145"></i><i class="d-caught" style="--i:146"></i><i class="d-caught" style="--i:147"></i><i class="d-caught" style="--i:148"></i><i class="d-caught" style="--i:149"></i><i class="d-caught" style="--i:150"></i><i class="d-caught" style="--i:151"></i><i class="d-caught" style="--i:152"></i><i class="d-caught" style="--i:153"></i><i class="d-caught" style="--i:154"></i><i class="d-caught" style="--i:155"></i><i class="d-caught" style="--i:156"></i><i class="d-caught" style="--i:157"></i><i class="d-caught" style="--i:158"></i><i class="d-caught" style="--i:159"></i><i class="d-caught" style="--i:160"></i><i class="d-caught" style="--i:161"></i><i class="d-caught" style="--i:162"></i><i class="d-caught" style="--i:163"></i><i class="d-caught" style="--i:164"></i><i class="d-caught" style="--i:165"></i><i class="d-caught" style="--i:166"></i><i class="d-caught" style="--i:167"></i><i class="d-caught" style="--i:168"></i><i class="d-caught" style="--i:169"></i><i class="d-caught" style="--i:170"></i><i class="d-caught" style="--i:171"></i><i class="d-caught" style="--i:172"></i><i class="d-caught" style="--i:173"></i><i class="d-caught" style="--i:174"></i><i class="d-caught" style="--i:175"></i><i class="d-caught" style="--i:176"></i><i class="d-caught" style="--i:177"></i><i class="d-caught" style="--i:178"></i><i class="d-caught" style="--i:179"></i><i class="d-caught" style="--i:180"></i><i class="d-caught" style="--i:181"></i><i class="d-caught" style="--i:182"></i><i class="d-caught" style="--i:183"></i><i class="d-caught" style="--i:184"></i><i class="d-caught" style="--i:185"></i><i class="d-caught" style="--i:186"></i><i class="d-caught" style="--i:187"></i><i class="d-caught" style="--i:188"></i><i class="d-caught" style="--i:189"></i><i class="d-caught" style="--i:190"></i><i class="d-caught" style="--i:191"></i><i class="d-caught" style="--i:192"></i><i class="d-caught" style="--i:193"></i><i class="d-caught" style="--i:194"></i><i class="d-caught" style="--i:195"></i><i class="d-caught" style="--i:196"></i><i class="d-caught" style="--i:197"></i><i class="d-caught" style="--i:198"></i><i class="d-caught" style="--i:199"></i><i class="d-caught" style="--i:200"></i><i class="d-caught" style="--i:201"></i><i class="d-caught" style="--i:202"></i><i class="d-caught" style="--i:203"></i><i class="d-caught" style="--i:204"></i><i class="d-caught" style="--i:205"></i><i class="d-caught" style="--i:206"></i><i class="d-caught" style="--i:207"></i><i class="d-caught" style="--i:208"></i><i class="d-caught" style="--i:209"></i><i class="d-caught" style="--i:210"></i><i class="d-caught" style="--i:211"></i><i class="d-caught" style="--i:212"></i><i class="d-caught" style="--i:213"></i><i class="d-caught" style="--i:214"></i><i class="d-caught" style="--i:215"></i><i class="d-caught" style="--i:216"></i><i class="d-caught" style="--i:217"></i><i class="d-caught" style="--i:218"></i><i class="d-caught" style="--i:219"></i><i class="d-caught" style="--i:220"></i><i class="d-caught" style="--i:221"></i><i class="d-caught" style="--i:222"></i><i class="d-caught" style="--i:223"></i><i class="d-caught" style="--i:224"></i><i class="d-caught" style="--i:225"></i><i class="d-caught" style="--i:226"></i><i class="d-caught" style="--i:227"></i><i class="d-caught" style="--i:228"></i><i class="d-caught" style="--i:229"></i><i class="d-caught" style="--i:230"></i><i class="d-caught" style="--i:231"></i><i class="d-caught" style="--i:232"></i><i class="d-caught" style="--i:233"></i><i class="d-caught" style="--i:234"></i><i class="d-caught" style="--i:235"></i><i class="d-caught" style="--i:236"></i><i class="d-caught" style="--i:237"></i><i class="d-caught" style="--i:238"></i><i class="d-caught" style="--i:239"></i><i class="d-caught" style="--i:240"></i><i class="d-caught" style="--i:241"></i><i class="d-caught" style="--i:242"></i><i class="d-caught" style="--i:243"></i><i class="d-caught" style="--i:244"></i><i class="d-caught" style="--i:245"></i><i class="d-caught" style="--i:246"></i><i class="d-caught" style="--i:247"></i><i class="d-caught" style="--i:248"></i><i class="d-caught" style="--i:249"></i><i class="d-caught" style="--i:250"></i><i class="d-caught" style="--i:251"></i><i class="d-missed" style="--i:252"></i><i class="d-missed" style="--i:253"></i><i class="d-missed" style="--i:254"></i><i class="d-missed" style="--i:255"></i><i class="d-missed" style="--i:256"></i><i class="d-missed" style="--i:257"></i><i class="d-missed" style="--i:258"></i><i class="d-missed" style="--i:259"></i><i class="d-missed" style="--i:260"></i><i class="d-missed" style="--i:261"></i><i class="d-missed" style="--i:262"></i><i class="d-missed" style="--i:263"></i><i class="d-missed" style="--i:264"></i><i class="d-missed" style="--i:265"></i><i class="d-missed" style="--i:266"></i></div><ul class="key"><li><span class="sw d-caught"></span><span class="tick" data-to="252" data-of="252">252</span> caught</li><li><span class="sw d-missed"></span><span class="tick" data-to="15" data-from="252" data-of="15">15</span> missed</li></ul></figure><figure class="field"><figcaption><b>899</b> mutations the lab found harmless</figcaption><div class="dots" data-anim role="img" aria-label="437 false alarms, 462 cleared"><i class="d-alarm" style="--i:0"></i><i class="d-alarm" style="--i:1"></i><i class="d-alarm" style="--i:2"></i><i class="d-alarm" style="--i:3"></i><i class="d-alarm" style="--i:4"></i><i class="d-alarm" style="--i:5"></i><i class="d-alarm" style="--i:6"></i><i class="d-alarm" style="--i:7"></i><i class="d-alarm" style="--i:8"></i><i class="d-alarm" style="--i:9"></i><i class="d-alarm" style="--i:10"></i><i class="d-alarm" style="--i:11"></i><i class="d-alarm" style="--i:12"></i><i class="d-alarm" style="--i:13"></i><i class="d-alarm" style="--i:14"></i><i class="d-alarm" style="--i:15"></i><i class="d-alarm" style="--i:16"></i><i class="d-alarm" style="--i:17"></i><i class="d-alarm" style="--i:18"></i><i class="d-alarm" style="--i:19"></i><i class="d-alarm" style="--i:20"></i><i class="d-alarm" style="--i:21"></i><i class="d-alarm" style="--i:22"></i><i class="d-alarm" style="--i:23"></i><i class="d-alarm" style="--i:24"></i><i class="d-alarm" style="--i:25"></i><i class="d-alarm" style="--i:26"></i><i class="d-alarm" style="--i:27"></i><i class="d-alarm" style="--i:28"></i><i class="d-alarm" style="--i:29"></i><i class="d-alarm" style="--i:30"></i><i class="d-alarm" style="--i:31"></i><i class="d-alarm" style="--i:32"></i><i class="d-alarm" style="--i:33"></i><i class="d-alarm" style="--i:34"></i><i class="d-alarm" style="--i:35"></i><i class="d-alarm" style="--i:36"></i><i class="d-alarm" style="--i:37"></i><i class="d-alarm" style="--i:38"></i><i class="d-alarm" style="--i:39"></i><i class="d-alarm" style="--i:40"></i><i class="d-alarm" style="--i:41"></i><i class="d-alarm" style="--i:42"></i><i class="d-alarm" style="--i:43"></i><i class="d-alarm" style="--i:44"></i><i class="d-alarm" style="--i:45"></i><i class="d-alarm" style="--i:46"></i><i class="d-alarm" style="--i:47"></i><i class="d-alarm" style="--i:48"></i><i class="d-alarm" style="--i:49"></i><i class="d-alarm" style="--i:50"></i><i class="d-alarm" style="--i:51"></i><i class="d-alarm" style="--i:52"></i><i class="d-alarm" style="--i:53"></i><i class="d-alarm" style="--i:54"></i><i class="d-alarm" style="--i:55"></i><i class="d-alarm" style="--i:56"></i><i class="d-alarm" style="--i:57"></i><i class="d-alarm" style="--i:58"></i><i class="d-alarm" style="--i:59"></i><i class="d-alarm" style="--i:60"></i><i class="d-alarm" style="--i:61"></i><i class="d-alarm" style="--i:62"></i><i class="d-alarm" style="--i:63"></i><i class="d-alarm" style="--i:64"></i><i class="d-alarm" style="--i:65"></i><i class="d-alarm" style="--i:66"></i><i class="d-alarm" style="--i:67"></i><i class="d-alarm" style="--i:68"></i><i class="d-alarm" style="--i:69"></i><i class="d-alarm" style="--i:70"></i><i class="d-alarm" style="--i:71"></i><i class="d-alarm" style="--i:72"></i><i class="d-alarm" style="--i:73"></i><i class="d-alarm" style="--i:74"></i><i class="d-alarm" style="--i:75"></i><i class="d-alarm" style="--i:76"></i><i class="d-alarm" style="--i:77"></i><i class="d-alarm" style="--i:78"></i><i class="d-alarm" style="--i:79"></i><i class="d-alarm" style="--i:80"></i><i class="d-alarm" style="--i:81"></i><i class="d-alarm" style="--i:82"></i><i class="d-alarm" style="--i:83"></i><i class="d-alarm" style="--i:84"></i><i class="d-alarm" style="--i:85"></i><i class="d-alarm" style="--i:86"></i><i class="d-alarm" style="--i:87"></i><i class="d-alarm" style="--i:88"></i><i class="d-alarm" style="--i:89"></i><i class="d-alarm" style="--i:90"></i><i class="d-alarm" style="--i:91"></i><i class="d-alarm" style="--i:92"></i><i class="d-alarm" style="--i:93"></i><i class="d-alarm" style="--i:94"></i><i class="d-alarm" style="--i:95"></i><i class="d-alarm" style="--i:96"></i><i class="d-alarm" style="--i:97"></i><i class="d-alarm" style="--i:98"></i><i class="d-alarm" style="--i:99"></i><i class="d-alarm" style="--i:100"></i><i class="d-alarm" style="--i:101"></i><i class="d-alarm" style="--i:102"></i><i class="d-alarm" style="--i:103"></i><i class="d-alarm" style="--i:104"></i><i class="d-alarm" style="--i:105"></i><i class="d-alarm" style="--i:106"></i><i class="d-alarm" style="--i:107"></i><i class="d-alarm" style="--i:108"></i><i class="d-alarm" style="--i:109"></i><i class="d-alarm" style="--i:110"></i><i class="d-alarm" style="--i:111"></i><i class="d-alarm" style="--i:112"></i><i class="d-alarm" style="--i:113"></i><i class="d-alarm" style="--i:114"></i><i class="d-alarm" style="--i:115"></i><i class="d-alarm" style="--i:116"></i><i class="d-alarm" style="--i:117"></i><i class="d-alarm" style="--i:118"></i><i class="d-alarm" style="--i:119"></i><i class="d-alarm" style="--i:120"></i><i class="d-alarm" style="--i:121"></i><i class="d-alarm" style="--i:122"></i><i class="d-alarm" style="--i:123"></i><i class="d-alarm" style="--i:124"></i><i class="d-alarm" style="--i:125"></i><i class="d-alarm" style="--i:126"></i><i class="d-alarm" style="--i:127"></i><i class="d-alarm" style="--i:128"></i><i class="d-alarm" style="--i:129"></i><i class="d-alarm" style="--i:130"></i><i class="d-alarm" style="--i:131"></i><i class="d-alarm" style="--i:132"></i><i class="d-alarm" style="--i:133"></i><i class="d-alarm" style="--i:134"></i><i class="d-alarm" style="--i:135"></i><i class="d-alarm" style="--i:136"></i><i class="d-alarm" style="--i:137"></i><i class="d-alarm" style="--i:138"></i><i class="d-alarm" style="--i:139"></i><i class="d-alarm" style="--i:140"></i><i class="d-alarm" style="--i:141"></i><i class="d-alarm" style="--i:142"></i><i class="d-alarm" style="--i:143"></i><i class="d-alarm" style="--i:144"></i><i class="d-alarm" style="--i:145"></i><i class="d-alarm" style="--i:146"></i><i class="d-alarm" style="--i:147"></i><i class="d-alarm" style="--i:148"></i><i class="d-alarm" style="--i:149"></i><i class="d-alarm" style="--i:150"></i><i class="d-alarm" style="--i:151"></i><i class="d-alarm" style="--i:152"></i><i class="d-alarm" style="--i:153"></i><i class="d-alarm" style="--i:154"></i><i class="d-alarm" style="--i:155"></i><i class="d-alarm" style="--i:156"></i><i class="d-alarm" style="--i:157"></i><i class="d-alarm" style="--i:158"></i><i class="d-alarm" style="--i:159"></i><i class="d-alarm" style="--i:160"></i><i class="d-alarm" style="--i:161"></i><i class="d-alarm" style="--i:162"></i><i class="d-alarm" style="--i:163"></i><i class="d-alarm" style="--i:164"></i><i class="d-alarm" style="--i:165"></i><i class="d-alarm" style="--i:166"></i><i class="d-alarm" style="--i:167"></i><i class="d-alarm" style="--i:168"></i><i class="d-alarm" style="--i:169"></i><i class="d-alarm" style="--i:170"></i><i class="d-alarm" style="--i:171"></i><i class="d-alarm" style="--i:172"></i><i class="d-alarm" style="--i:173"></i><i class="d-alarm" style="--i:174"></i><i class="d-alarm" style="--i:175"></i><i class="d-alarm" style="--i:176"></i><i class="d-alarm" style="--i:177"></i><i class="d-alarm" style="--i:178"></i><i class="d-alarm" style="--i:179"></i><i class="d-alarm" style="--i:180"></i><i class="d-alarm" style="--i:181"></i><i class="d-alarm" style="--i:182"></i><i class="d-alarm" style="--i:183"></i><i class="d-alarm" style="--i:184"></i><i class="d-alarm" style="--i:185"></i><i class="d-alarm" style="--i:186"></i><i class="d-alarm" style="--i:187"></i><i class="d-alarm" style="--i:188"></i><i class="d-alarm" style="--i:189"></i><i class="d-alarm" style="--i:190"></i><i class="d-alarm" style="--i:191"></i><i class="d-alarm" style="--i:192"></i><i class="d-alarm" style="--i:193"></i><i class="d-alarm" style="--i:194"></i><i class="d-alarm" style="--i:195"></i><i class="d-alarm" style="--i:196"></i><i class="d-alarm" style="--i:197"></i><i class="d-alarm" style="--i:198"></i><i class="d-alarm" style="--i:199"></i><i class="d-alarm" style="--i:200"></i><i class="d-alarm" style="--i:201"></i><i class="d-alarm" style="--i:202"></i><i class="d-alarm" style="--i:203"></i><i class="d-alarm" style="--i:204"></i><i class="d-alarm" style="--i:205"></i><i class="d-alarm" style="--i:206"></i><i class="d-alarm" style="--i:207"></i><i class="d-alarm" style="--i:208"></i><i class="d-alarm" style="--i:209"></i><i class="d-alarm" style="--i:210"></i><i class="d-alarm" style="--i:211"></i><i class="d-alarm" style="--i:212"></i><i class="d-alarm" style="--i:213"></i><i class="d-alarm" style="--i:214"></i><i class="d-alarm" style="--i:215"></i><i class="d-alarm" style="--i:216"></i><i class="d-alarm" style="--i:217"></i><i class="d-alarm" style="--i:218"></i><i class="d-alarm" style="--i:219"></i><i class="d-alarm" style="--i:220"></i><i class="d-alarm" style="--i:221"></i><i class="d-alarm" style="--i:222"></i><i class="d-alarm" style="--i:223"></i><i class="d-alarm" style="--i:224"></i><i class="d-alarm" style="--i:225"></i><i class="d-alarm" style="--i:226"></i><i class="d-alarm" style="--i:227"></i><i class="d-alarm" style="--i:228"></i><i class="d-alarm" style="--i:229"></i><i class="d-alarm" style="--i:230"></i><i class="d-alarm" style="--i:231"></i><i class="d-alarm" style="--i:232"></i><i class="d-alarm" style="--i:233"></i><i class="d-alarm" style="--i:234"></i><i class="d-alarm" style="--i:235"></i><i class="d-alarm" style="--i:236"></i><i class="d-alarm" style="--i:237"></i><i class="d-alarm" style="--i:238"></i><i class="d-alarm" style="--i:239"></i><i class="d-alarm" style="--i:240"></i><i class="d-alarm" style="--i:241"></i><i class="d-alarm" style="--i:242"></i><i class="d-alarm" style="--i:243"></i><i class="d-alarm" style="--i:244"></i><i class="d-alarm" style="--i:245"></i><i class="d-alarm" style="--i:246"></i><i class="d-alarm" style="--i:247"></i><i class="d-alarm" style="--i:248"></i><i class="d-alarm" style="--i:249"></i><i class="d-alarm" style="--i:250"></i><i class="d-alarm" style="--i:251"></i><i class="d-alarm" style="--i:252"></i><i class="d-alarm" style="--i:253"></i><i class="d-alarm" style="--i:254"></i><i class="d-alarm" style="--i:255"></i><i class="d-alarm" style="--i:256"></i><i class="d-alarm" style="--i:257"></i><i class="d-alarm" style="--i:258"></i><i class="d-alarm" style="--i:259"></i><i class="d-alarm" style="--i:260"></i><i class="d-alarm" style="--i:261"></i><i class="d-alarm" style="--i:262"></i><i class="d-alarm" style="--i:263"></i><i class="d-alarm" style="--i:264"></i><i class="d-alarm" style="--i:265"></i><i class="d-alarm" style="--i:266"></i><i class="d-alarm" style="--i:267"></i><i class="d-alarm" style="--i:268"></i><i class="d-alarm" style="--i:269"></i><i class="d-alarm" style="--i:270"></i><i class="d-alarm" style="--i:271"></i><i class="d-alarm" style="--i:272"></i><i class="d-alarm" style="--i:273"></i><i class="d-alarm" style="--i:274"></i><i class="d-alarm" style="--i:275"></i><i class="d-alarm" style="--i:276"></i><i class="d-alarm" style="--i:277"></i><i class="d-alarm" style="--i:278"></i><i class="d-alarm" style="--i:279"></i><i class="d-alarm" style="--i:280"></i><i class="d-alarm" style="--i:281"></i><i class="d-alarm" style="--i:282"></i><i class="d-alarm" style="--i:283"></i><i class="d-alarm" style="--i:284"></i><i class="d-alarm" style="--i:285"></i><i class="d-alarm" style="--i:286"></i><i class="d-alarm" style="--i:287"></i><i class="d-alarm" style="--i:288"></i><i class="d-alarm" style="--i:289"></i><i class="d-alarm" style="--i:290"></i><i class="d-alarm" style="--i:291"></i><i class="d-alarm" style="--i:292"></i><i class="d-alarm" style="--i:293"></i><i class="d-alarm" style="--i:294"></i><i class="d-alarm" style="--i:295"></i><i class="d-alarm" style="--i:296"></i><i class="d-alarm" style="--i:297"></i><i class="d-alarm" style="--i:298"></i><i class="d-alarm" style="--i:299"></i><i class="d-alarm" style="--i:300"></i><i class="d-alarm" style="--i:301"></i><i class="d-alarm" style="--i:302"></i><i class="d-alarm" style="--i:303"></i><i class="d-alarm" style="--i:304"></i><i class="d-alarm" style="--i:305"></i><i class="d-alarm" style="--i:306"></i><i class="d-alarm" style="--i:307"></i><i class="d-alarm" style="--i:308"></i><i class="d-alarm" style="--i:309"></i><i class="d-alarm" style="--i:310"></i><i class="d-alarm" style="--i:311"></i><i class="d-alarm" style="--i:312"></i><i class="d-alarm" style="--i:313"></i><i class="d-alarm" style="--i:314"></i><i class="d-alarm" style="--i:315"></i><i class="d-alarm" style="--i:316"></i><i class="d-alarm" style="--i:317"></i><i class="d-alarm" style="--i:318"></i><i class="d-alarm" style="--i:319"></i><i class="d-alarm" style="--i:320"></i><i class="d-alarm" style="--i:321"></i><i class="d-alarm" style="--i:322"></i><i class="d-alarm" style="--i:323"></i><i class="d-alarm" style="--i:324"></i><i class="d-alarm" style="--i:325"></i><i class="d-alarm" style="--i:326"></i><i class="d-alarm" style="--i:327"></i><i class="d-alarm" style="--i:328"></i><i class="d-alarm" style="--i:329"></i><i class="d-alarm" style="--i:330"></i><i class="d-alarm" style="--i:331"></i><i class="d-alarm" style="--i:332"></i><i class="d-alarm" style="--i:333"></i><i class="d-alarm" style="--i:334"></i><i class="d-alarm" style="--i:335"></i><i class="d-alarm" style="--i:336"></i><i class="d-alarm" style="--i:337"></i><i class="d-alarm" style="--i:338"></i><i class="d-alarm" style="--i:339"></i><i class="d-alarm" style="--i:340"></i><i class="d-alarm" style="--i:341"></i><i class="d-alarm" style="--i:342"></i><i class="d-alarm" style="--i:343"></i><i class="d-alarm" style="--i:344"></i><i class="d-alarm" style="--i:345"></i><i class="d-alarm" style="--i:346"></i><i class="d-alarm" style="--i:347"></i><i class="d-alarm" style="--i:348"></i><i class="d-alarm" style="--i:349"></i><i class="d-alarm" style="--i:350"></i><i class="d-alarm" style="--i:351"></i><i class="d-alarm" style="--i:352"></i><i class="d-alarm" style="--i:353"></i><i class="d-alarm" style="--i:354"></i><i class="d-alarm" style="--i:355"></i><i class="d-alarm" style="--i:356"></i><i class="d-alarm" style="--i:357"></i><i class="d-alarm" style="--i:358"></i><i class="d-alarm" style="--i:359"></i><i class="d-alarm" style="--i:360"></i><i class="d-alarm" style="--i:361"></i><i class="d-alarm" style="--i:362"></i><i class="d-alarm" style="--i:363"></i><i class="d-alarm" style="--i:364"></i><i class="d-alarm" style="--i:365"></i><i class="d-alarm" style="--i:366"></i><i class="d-alarm" style="--i:367"></i><i class="d-alarm" style="--i:368"></i><i class="d-alarm" style="--i:369"></i><i class="d-alarm" style="--i:370"></i><i class="d-alarm" style="--i:371"></i><i class="d-alarm" style="--i:372"></i><i class="d-alarm" style="--i:373"></i><i class="d-alarm" style="--i:374"></i><i class="d-alarm" style="--i:375"></i><i class="d-alarm" style="--i:376"></i><i class="d-alarm" style="--i:377"></i><i class="d-alarm" style="--i:378"></i><i class="d-alarm" style="--i:379"></i><i class="d-alarm" style="--i:380"></i><i class="d-alarm" style="--i:381"></i><i class="d-alarm" style="--i:382"></i><i class="d-alarm" style="--i:383"></i><i class="d-alarm" style="--i:384"></i><i class="d-alarm" style="--i:385"></i><i class="d-alarm" style="--i:386"></i><i class="d-alarm" style="--i:387"></i><i class="d-alarm" style="--i:388"></i><i class="d-alarm" style="--i:389"></i><i class="d-alarm" style="--i:390"></i><i class="d-alarm" style="--i:391"></i><i class="d-alarm" style="--i:392"></i><i class="d-alarm" style="--i:393"></i><i class="d-alarm" style="--i:394"></i><i class="d-alarm" style="--i:395"></i><i class="d-alarm" style="--i:396"></i><i class="d-alarm" style="--i:397"></i><i class="d-alarm" style="--i:398"></i><i class="d-alarm" style="--i:399"></i><i class="d-alarm" style="--i:400"></i><i class="d-alarm" style="--i:401"></i><i class="d-alarm" style="--i:402"></i><i class="d-alarm" style="--i:403"></i><i class="d-alarm" style="--i:404"></i><i class="d-alarm" style="--i:405"></i><i class="d-alarm" style="--i:406"></i><i class="d-alarm" style="--i:407"></i><i class="d-alarm" style="--i:408"></i><i class="d-alarm" style="--i:409"></i><i class="d-alarm" style="--i:410"></i><i class="d-alarm" style="--i:411"></i><i class="d-alarm" style="--i:412"></i><i class="d-alarm" style="--i:413"></i><i class="d-alarm" style="--i:414"></i><i class="d-alarm" style="--i:415"></i><i class="d-alarm" style="--i:416"></i><i class="d-alarm" style="--i:417"></i><i class="d-alarm" style="--i:418"></i><i class="d-alarm" style="--i:419"></i><i class="d-alarm" style="--i:420"></i><i class="d-alarm" style="--i:421"></i><i class="d-alarm" style="--i:422"></i><i class="d-alarm" style="--i:423"></i><i class="d-alarm" style="--i:424"></i><i class="d-alarm" style="--i:425"></i><i class="d-alarm" style="--i:426"></i><i class="d-alarm" style="--i:427"></i><i class="d-alarm" style="--i:428"></i><i class="d-alarm" style="--i:429"></i><i class="d-alarm" style="--i:430"></i><i class="d-alarm" style="--i:431"></i><i class="d-alarm" style="--i:432"></i><i class="d-alarm" style="--i:433"></i><i class="d-alarm" style="--i:434"></i><i class="d-alarm" style="--i:435"></i><i class="d-alarm" style="--i:436"></i><i class="d-cleared" style="--i:437"></i><i class="d-cleared" style="--i:438"></i><i class="d-cleared" style="--i:439"></i><i class="d-cleared" style="--i:440"></i><i class="d-cleared" style="--i:441"></i><i class="d-cleared" style="--i:442"></i><i class="d-cleared" style="--i:443"></i><i class="d-cleared" style="--i:444"></i><i class="d-cleared" style="--i:445"></i><i class="d-cleared" style="--i:446"></i><i class="d-cleared" style="--i:447"></i><i class="d-cleared" style="--i:448"></i><i class="d-cleared" style="--i:449"></i><i class="d-cleared" style="--i:450"></i><i class="d-cleared" style="--i:451"></i><i class="d-cleared" style="--i:452"></i><i class="d-cleared" style="--i:453"></i><i class="d-cleared" style="--i:454"></i><i class="d-cleared" style="--i:455"></i><i class="d-cleared" style="--i:456"></i><i class="d-cleared" style="--i:457"></i><i class="d-cleared" style="--i:458"></i><i class="d-cleared" style="--i:459"></i><i class="d-cleared" style="--i:460"></i><i class="d-cleared" style="--i:461"></i><i class="d-cleared" style="--i:462"></i><i class="d-cleared" style="--i:463"></i><i class="d-cleared" style="--i:464"></i><i class="d-cleared" style="--i:465"></i><i class="d-cleared" style="--i:466"></i><i class="d-cleared" style="--i:467"></i><i class="d-cleared" style="--i:468"></i><i class="d-cleared" style="--i:469"></i><i class="d-cleared" style="--i:470"></i><i class="d-cleared" style="--i:471"></i><i class="d-cleared" style="--i:472"></i><i class="d-cleared" style="--i:473"></i><i class="d-cleared" style="--i:474"></i><i class="d-cleared" style="--i:475"></i><i class="d-cleared" style="--i:476"></i><i class="d-cleared" style="--i:477"></i><i class="d-cleared" style="--i:478"></i><i class="d-cleared" style="--i:479"></i><i class="d-cleared" style="--i:480"></i><i class="d-cleared" style="--i:481"></i><i class="d-cleared" style="--i:482"></i><i class="d-cleared" style="--i:483"></i><i class="d-cleared" style="--i:484"></i><i class="d-cleared" style="--i:485"></i><i class="d-cleared" style="--i:486"></i><i class="d-cleared" style="--i:487"></i><i class="d-cleared" style="--i:488"></i><i class="d-cleared" style="--i:489"></i><i class="d-cleared" style="--i:490"></i><i class="d-cleared" style="--i:491"></i><i class="d-cleared" style="--i:492"></i><i class="d-cleared" style="--i:493"></i><i class="d-cleared" style="--i:494"></i><i class="d-cleared" style="--i:495"></i><i class="d-cleared" style="--i:496"></i><i class="d-cleared" style="--i:497"></i><i class="d-cleared" style="--i:498"></i><i class="d-cleared" style="--i:499"></i><i class="d-cleared" style="--i:500"></i><i class="d-cleared" style="--i:501"></i><i class="d-cleared" style="--i:502"></i><i class="d-cleared" style="--i:503"></i><i class="d-cleared" style="--i:504"></i><i class="d-cleared" style="--i:505"></i><i class="d-cleared" style="--i:506"></i><i class="d-cleared" style="--i:507"></i><i class="d-cleared" style="--i:508"></i><i class="d-cleared" style="--i:509"></i><i class="d-cleared" style="--i:510"></i><i class="d-cleared" style="--i:511"></i><i class="d-cleared" style="--i:512"></i><i class="d-cleared" style="--i:513"></i><i class="d-cleared" style="--i:514"></i><i class="d-cleared" style="--i:515"></i><i class="d-cleared" style="--i:516"></i><i class="d-cleared" style="--i:517"></i><i class="d-cleared" style="--i:518"></i><i class="d-cleared" style="--i:519"></i><i class="d-cleared" style="--i:520"></i><i class="d-cleared" style="--i:521"></i><i class="d-cleared" style="--i:522"></i><i class="d-cleared" style="--i:523"></i><i class="d-cleared" style="--i:524"></i><i class="d-cleared" style="--i:525"></i><i class="d-cleared" style="--i:526"></i><i class="d-cleared" style="--i:527"></i><i class="d-cleared" style="--i:528"></i><i class="d-cleared" style="--i:529"></i><i class="d-cleared" style="--i:530"></i><i class="d-cleared" style="--i:531"></i><i class="d-cleared" style="--i:532"></i><i class="d-cleared" style="--i:533"></i><i class="d-cleared" style="--i:534"></i><i class="d-cleared" style="--i:535"></i><i class="d-cleared" style="--i:536"></i><i class="d-cleared" style="--i:537"></i><i class="d-cleared" style="--i:538"></i><i class="d-cleared" style="--i:539"></i><i class="d-cleared" style="--i:540"></i><i class="d-cleared" style="--i:541"></i><i class="d-cleared" style="--i:542"></i><i class="d-cleared" style="--i:543"></i><i class="d-cleared" style="--i:544"></i><i class="d-cleared" style="--i:545"></i><i class="d-cleared" style="--i:546"></i><i class="d-cleared" style="--i:547"></i><i class="d-cleared" style="--i:548"></i><i class="d-cleared" style="--i:549"></i><i class="d-cleared" style="--i:550"></i><i class="d-cleared" style="--i:551"></i><i class="d-cleared" style="--i:552"></i><i class="d-cleared" style="--i:553"></i><i class="d-cleared" style="--i:554"></i><i class="d-cleared" style="--i:555"></i><i class="d-cleared" style="--i:556"></i><i class="d-cleared" style="--i:557"></i><i class="d-cleared" style="--i:558"></i><i class="d-cleared" style="--i:559"></i><i class="d-cleared" style="--i:560"></i><i class="d-cleared" style="--i:561"></i><i class="d-cleared" style="--i:562"></i><i class="d-cleared" style="--i:563"></i><i class="d-cleared" style="--i:564"></i><i class="d-cleared" style="--i:565"></i><i class="d-cleared" style="--i:566"></i><i class="d-cleared" style="--i:567"></i><i class="d-cleared" style="--i:568"></i><i class="d-cleared" style="--i:569"></i><i class="d-cleared" style="--i:570"></i><i class="d-cleared" style="--i:571"></i><i class="d-cleared" style="--i:572"></i><i class="d-cleared" style="--i:573"></i><i class="d-cleared" style="--i:574"></i><i class="d-cleared" style="--i:575"></i><i class="d-cleared" style="--i:576"></i><i class="d-cleared" style="--i:577"></i><i class="d-cleared" style="--i:578"></i><i class="d-cleared" style="--i:579"></i><i class="d-cleared" style="--i:580"></i><i class="d-cleared" style="--i:581"></i><i class="d-cleared" style="--i:582"></i><i class="d-cleared" style="--i:583"></i><i class="d-cleared" style="--i:584"></i><i class="d-cleared" style="--i:585"></i><i class="d-cleared" style="--i:586"></i><i class="d-cleared" style="--i:587"></i><i class="d-cleared" style="--i:588"></i><i class="d-cleared" style="--i:589"></i><i class="d-cleared" style="--i:590"></i><i class="d-cleared" style="--i:591"></i><i class="d-cleared" style="--i:592"></i><i class="d-cleared" style="--i:593"></i><i class="d-cleared" style="--i:594"></i><i class="d-cleared" style="--i:595"></i><i class="d-cleared" style="--i:596"></i><i class="d-cleared" style="--i:597"></i><i class="d-cleared" style="--i:598"></i><i class="d-cleared" style="--i:599"></i><i class="d-cleared" style="--i:600"></i><i class="d-cleared" style="--i:601"></i><i class="d-cleared" style="--i:602"></i><i class="d-cleared" style="--i:603"></i><i class="d-cleared" style="--i:604"></i><i class="d-cleared" style="--i:605"></i><i class="d-cleared" style="--i:606"></i><i class="d-cleared" style="--i:607"></i><i class="d-cleared" style="--i:608"></i><i class="d-cleared" style="--i:609"></i><i class="d-cleared" style="--i:610"></i><i class="d-cleared" style="--i:611"></i><i class="d-cleared" style="--i:612"></i><i class="d-cleared" style="--i:613"></i><i class="d-cleared" style="--i:614"></i><i class="d-cleared" style="--i:615"></i><i class="d-cleared" style="--i:616"></i><i class="d-cleared" style="--i:617"></i><i class="d-cleared" style="--i:618"></i><i class="d-cleared" style="--i:619"></i><i class="d-cleared" style="--i:620"></i><i class="d-cleared" style="--i:621"></i><i class="d-cleared" style="--i:622"></i><i class="d-cleared" style="--i:623"></i><i class="d-cleared" style="--i:624"></i><i class="d-cleared" style="--i:625"></i><i class="d-cleared" style="--i:626"></i><i class="d-cleared" style="--i:627"></i><i class="d-cleared" style="--i:628"></i><i class="d-cleared" style="--i:629"></i><i class="d-cleared" style="--i:630"></i><i class="d-cleared" style="--i:631"></i><i class="d-cleared" style="--i:632"></i><i class="d-cleared" style="--i:633"></i><i class="d-cleared" style="--i:634"></i><i class="d-cleared" style="--i:635"></i><i class="d-cleared" style="--i:636"></i><i class="d-cleared" style="--i:637"></i><i class="d-cleared" style="--i:638"></i><i class="d-cleared" style="--i:639"></i><i class="d-cleared" style="--i:640"></i><i class="d-cleared" style="--i:641"></i><i class="d-cleared" style="--i:642"></i><i class="d-cleared" style="--i:643"></i><i class="d-cleared" style="--i:644"></i><i class="d-cleared" style="--i:645"></i><i class="d-cleared" style="--i:646"></i><i class="d-cleared" style="--i:647"></i><i class="d-cleared" style="--i:648"></i><i class="d-cleared" style="--i:649"></i><i class="d-cleared" style="--i:650"></i><i class="d-cleared" style="--i:651"></i><i class="d-cleared" style="--i:652"></i><i class="d-cleared" style="--i:653"></i><i class="d-cleared" style="--i:654"></i><i class="d-cleared" style="--i:655"></i><i class="d-cleared" style="--i:656"></i><i class="d-cleared" style="--i:657"></i><i class="d-cleared" style="--i:658"></i><i class="d-cleared" style="--i:659"></i><i class="d-cleared" style="--i:660"></i><i class="d-cleared" style="--i:661"></i><i class="d-cleared" style="--i:662"></i><i class="d-cleared" style="--i:663"></i><i class="d-cleared" style="--i:664"></i><i class="d-cleared" style="--i:665"></i><i class="d-cleared" style="--i:666"></i><i class="d-cleared" style="--i:667"></i><i class="d-cleared" style="--i:668"></i><i class="d-cleared" style="--i:669"></i><i class="d-cleared" style="--i:670"></i><i class="d-cleared" style="--i:671"></i><i class="d-cleared" style="--i:672"></i><i class="d-cleared" style="--i:673"></i><i class="d-cleared" style="--i:674"></i><i class="d-cleared" style="--i:675"></i><i class="d-cleared" style="--i:676"></i><i class="d-cleared" style="--i:677"></i><i class="d-cleared" style="--i:678"></i><i class="d-cleared" style="--i:679"></i><i class="d-cleared" style="--i:680"></i><i class="d-cleared" style="--i:681"></i><i class="d-cleared" style="--i:682"></i><i class="d-cleared" style="--i:683"></i><i class="d-cleared" style="--i:684"></i><i class="d-cleared" style="--i:685"></i><i class="d-cleared" style="--i:686"></i><i class="d-cleared" style="--i:687"></i><i class="d-cleared" style="--i:688"></i><i class="d-cleared" style="--i:689"></i><i class="d-cleared" style="--i:690"></i><i class="d-cleared" style="--i:691"></i><i class="d-cleared" style="--i:692"></i><i class="d-cleared" style="--i:693"></i><i class="d-cleared" style="--i:694"></i><i class="d-cleared" style="--i:695"></i><i class="d-cleared" style="--i:696"></i><i class="d-cleared" style="--i:697"></i><i class="d-cleared" style="--i:698"></i><i class="d-cleared" style="--i:699"></i><i class="d-cleared" style="--i:700"></i><i class="d-cleared" style="--i:701"></i><i class="d-cleared" style="--i:702"></i><i class="d-cleared" style="--i:703"></i><i class="d-cleared" style="--i:704"></i><i class="d-cleared" style="--i:705"></i><i class="d-cleared" style="--i:706"></i><i class="d-cleared" style="--i:707"></i><i class="d-cleared" style="--i:708"></i><i class="d-cleared" style="--i:709"></i><i class="d-cleared" style="--i:710"></i><i class="d-cleared" style="--i:711"></i><i class="d-cleared" style="--i:712"></i><i class="d-cleared" style="--i:713"></i><i class="d-cleared" style="--i:714"></i><i class="d-cleared" style="--i:715"></i><i class="d-cleared" style="--i:716"></i><i class="d-cleared" style="--i:717"></i><i class="d-cleared" style="--i:718"></i><i class="d-cleared" style="--i:719"></i><i class="d-cleared" style="--i:720"></i><i class="d-cleared" style="--i:721"></i><i class="d-cleared" style="--i:722"></i><i class="d-cleared" style="--i:723"></i><i class="d-cleared" style="--i:724"></i><i class="d-cleared" style="--i:725"></i><i class="d-cleared" style="--i:726"></i><i class="d-cleared" style="--i:727"></i><i class="d-cleared" style="--i:728"></i><i class="d-cleared" style="--i:729"></i><i class="d-cleared" style="--i:730"></i><i class="d-cleared" style="--i:731"></i><i class="d-cleared" style="--i:732"></i><i class="d-cleared" style="--i:733"></i><i class="d-cleared" style="--i:734"></i><i class="d-cleared" style="--i:735"></i><i class="d-cleared" style="--i:736"></i><i class="d-cleared" style="--i:737"></i><i class="d-cleared" style="--i:738"></i><i class="d-cleared" style="--i:739"></i><i class="d-cleared" style="--i:740"></i><i class="d-cleared" style="--i:741"></i><i class="d-cleared" style="--i:742"></i><i class="d-cleared" style="--i:743"></i><i class="d-cleared" style="--i:744"></i><i class="d-cleared" style="--i:745"></i><i class="d-cleared" style="--i:746"></i><i class="d-cleared" style="--i:747"></i><i class="d-cleared" style="--i:748"></i><i class="d-cleared" style="--i:749"></i><i class="d-cleared" style="--i:750"></i><i class="d-cleared" style="--i:751"></i><i class="d-cleared" style="--i:752"></i><i class="d-cleared" style="--i:753"></i><i class="d-cleared" style="--i:754"></i><i class="d-cleared" style="--i:755"></i><i class="d-cleared" style="--i:756"></i><i class="d-cleared" style="--i:757"></i><i class="d-cleared" style="--i:758"></i><i class="d-cleared" style="--i:759"></i><i class="d-cleared" style="--i:760"></i><i class="d-cleared" style="--i:761"></i><i class="d-cleared" style="--i:762"></i><i class="d-cleared" style="--i:763"></i><i class="d-cleared" style="--i:764"></i><i class="d-cleared" style="--i:765"></i><i class="d-cleared" style="--i:766"></i><i class="d-cleared" style="--i:767"></i><i class="d-cleared" style="--i:768"></i><i class="d-cleared" style="--i:769"></i><i class="d-cleared" style="--i:770"></i><i class="d-cleared" style="--i:771"></i><i class="d-cleared" style="--i:772"></i><i class="d-cleared" style="--i:773"></i><i class="d-cleared" style="--i:774"></i><i class="d-cleared" style="--i:775"></i><i class="d-cleared" style="--i:776"></i><i class="d-cleared" style="--i:777"></i><i class="d-cleared" style="--i:778"></i><i class="d-cleared" style="--i:779"></i><i class="d-cleared" style="--i:780"></i><i class="d-cleared" style="--i:781"></i><i class="d-cleared" style="--i:782"></i><i class="d-cleared" style="--i:783"></i><i class="d-cleared" style="--i:784"></i><i class="d-cleared" style="--i:785"></i><i class="d-cleared" style="--i:786"></i><i class="d-cleared" style="--i:787"></i><i class="d-cleared" style="--i:788"></i><i class="d-cleared" style="--i:789"></i><i class="d-cleared" style="--i:790"></i><i class="d-cleared" style="--i:791"></i><i class="d-cleared" style="--i:792"></i><i class="d-cleared" style="--i:793"></i><i class="d-cleared" style="--i:794"></i><i class="d-cleared" style="--i:795"></i><i class="d-cleared" style="--i:796"></i><i class="d-cleared" style="--i:797"></i><i class="d-cleared" style="--i:798"></i><i class="d-cleared" style="--i:799"></i><i class="d-cleared" style="--i:800"></i><i class="d-cleared" style="--i:801"></i><i class="d-cleared" style="--i:802"></i><i class="d-cleared" style="--i:803"></i><i class="d-cleared" style="--i:804"></i><i class="d-cleared" style="--i:805"></i><i class="d-cleared" style="--i:806"></i><i class="d-cleared" style="--i:807"></i><i class="d-cleared" style="--i:808"></i><i class="d-cleared" style="--i:809"></i><i class="d-cleared" style="--i:810"></i><i class="d-cleared" style="--i:811"></i><i class="d-cleared" style="--i:812"></i><i class="d-cleared" style="--i:813"></i><i class="d-cleared" style="--i:814"></i><i class="d-cleared" style="--i:815"></i><i class="d-cleared" style="--i:816"></i><i class="d-cleared" style="--i:817"></i><i class="d-cleared" style="--i:818"></i><i class="d-cleared" style="--i:819"></i><i class="d-cleared" style="--i:820"></i><i class="d-cleared" style="--i:821"></i><i class="d-cleared" style="--i:822"></i><i class="d-cleared" style="--i:823"></i><i class="d-cleared" style="--i:824"></i><i class="d-cleared" style="--i:825"></i><i class="d-cleared" style="--i:826"></i><i class="d-cleared" style="--i:827"></i><i class="d-cleared" style="--i:828"></i><i class="d-cleared" style="--i:829"></i><i class="d-cleared" style="--i:830"></i><i class="d-cleared" style="--i:831"></i><i class="d-cleared" style="--i:832"></i><i class="d-cleared" style="--i:833"></i><i class="d-cleared" style="--i:834"></i><i class="d-cleared" style="--i:835"></i><i class="d-cleared" style="--i:836"></i><i class="d-cleared" style="--i:837"></i><i class="d-cleared" style="--i:838"></i><i class="d-cleared" style="--i:839"></i><i class="d-cleared" style="--i:840"></i><i class="d-cleared" style="--i:841"></i><i class="d-cleared" style="--i:842"></i><i class="d-cleared" style="--i:843"></i><i class="d-cleared" style="--i:844"></i><i class="d-cleared" style="--i:845"></i><i class="d-cleared" style="--i:846"></i><i class="d-cleared" style="--i:847"></i><i class="d-cleared" style="--i:848"></i><i class="d-cleared" style="--i:849"></i><i class="d-cleared" style="--i:850"></i><i class="d-cleared" style="--i:851"></i><i class="d-cleared" style="--i:852"></i><i class="d-cleared" style="--i:853"></i><i class="d-cleared" style="--i:854"></i><i class="d-cleared" style="--i:855"></i><i class="d-cleared" style="--i:856"></i><i class="d-cleared" style="--i:857"></i><i class="d-cleared" style="--i:858"></i><i class="d-cleared" style="--i:859"></i><i class="d-cleared" style="--i:860"></i><i class="d-cleared" style="--i:861"></i><i class="d-cleared" style="--i:862"></i><i class="d-cleared" style="--i:863"></i><i class="d-cleared" style="--i:864"></i><i class="d-cleared" style="--i:865"></i><i class="d-cleared" style="--i:866"></i><i class="d-cleared" style="--i:867"></i><i class="d-cleared" style="--i:868"></i><i class="d-cleared" style="--i:869"></i><i class="d-cleared" style="--i:870"></i><i class="d-cleared" style="--i:871"></i><i class="d-cleared" style="--i:872"></i><i class="d-cleared" style="--i:873"></i><i class="d-cleared" style="--i:874"></i><i class="d-cleared" style="--i:875"></i><i class="d-cleared" style="--i:876"></i><i class="d-cleared" style="--i:877"></i><i class="d-cleared" style="--i:878"></i><i class="d-cleared" style="--i:879"></i><i class="d-cleared" style="--i:880"></i><i class="d-cleared" style="--i:881"></i><i class="d-cleared" style="--i:882"></i><i class="d-cleared" style="--i:883"></i><i class="d-cleared" style="--i:884"></i><i class="d-cleared" style="--i:885"></i><i class="d-cleared" style="--i:886"></i><i class="d-cleared" style="--i:887"></i><i class="d-cleared" style="--i:888"></i><i class="d-cleared" style="--i:889"></i><i class="d-cleared" style="--i:890"></i><i class="d-cleared" style="--i:891"></i><i class="d-cleared" style="--i:892"></i><i class="d-cleared" style="--i:893"></i><i class="d-cleared" style="--i:894"></i><i class="d-cleared" style="--i:895"></i><i class="d-cleared" style="--i:896"></i><i class="d-cleared" style="--i:897"></i><i class="d-cleared" style="--i:898"></i></div><ul class="key"><li><span class="sw d-alarm"></span><span class="tick" data-to="437" data-of="437">437</span> false alarms</li><li><span class="sw d-cleared"></span><span class="tick" data-to="462" data-from="437" data-of="462">462</span> correctly left alone</li></ul></figure></div>
+  <p class="lead2">A model that only read protein sequences ranked harmful BRCA1 mutations better than a classic substitution table. Its AUROC was 0.899 against 0.668 for BLOSUM62.</p>
+  <div class="tw"><table class="arms"><thead><tr><th scope="col">Method</th><th scope="col">Caught <small>of 267</small></th><th scope="col">Missed <small>of 267</small></th><th scope="col">False alarms <small>of 899</small></th><th scope="col">Catch rate</th><th scope="col">AUROC</th></tr></thead><tbody><tr><th scope="row">Always says harmless</th><td>0</td><td>267</td><td>0</td><td>0.0%</td><td>0.500</td></tr><tr><th scope="row">BLOSUM62 rule</th><td>232</td><td>35</td><td>571</td><td>86.9%</td><td>0.668</td></tr><tr class="ours"><th scope="row">ESM-2, our model</th><td>252</td><td>15</td><td>437</td><td>94.4%</td><td>0.899</td></tr><tr><th scope="row">ESM-2 plus extras</th><td>245</td><td>22</td><td>405</td><td>91.8%</td><td>0.866</td></tr></tbody></table></div>
+  <p class="fine">AUROC ranks how well each method orders harmful above harmless; 0.5 is a coin flip. ESM-2 minus BLOSUM62: +0.231, with a 2.5th to 97.5th percentile range of +0.188 to +0.272 over 1,000 resamples of end-region positions.</p>
+</section>
+
+<section class="sec" id="fails">
+  <h2>Where it fails.</h2>
+  <p class="sub">We show our two worst mistakes on purpose. Both are guesses about why, and we did not test them.</p>
+  <div class="cases"><article class="case"><div class="strip" data-anim aria-label="BRCA1 positions 1818 to 1828, A1823S" role="img"><span class="aa" style="--i:0">D</span><span class="aa" style="--i:1">N</span><span class="aa" style="--i:2">G</span><span class="aa" style="--i:3">F</span><span class="aa" style="--i:4">H</span><span class="aa hit k-harmless" style="--i:5"><span class="old">A</span><span class="new">S</span><i></i><span class="pos">1823</span></span><span class="aa" style="--i:6">I</span><span class="aa" style="--i:7">G</span><span class="aa" style="--i:8">Q</span><span class="aa" style="--i:9">M</span><span class="aa" style="--i:10">C</span></div><h3>A1823S, our worst miss</h3><p>The lab measured −3.643, well into broken. The model scored it +0.75 and called it "Looks harmless". The BLOSUM62 rule and ESM-2 plus extras missed it too.</p><p class="guess"><b>Our guess, not tested:</b> the lab edited DNA, not protein. This change may upset how the gene's message is spliced, which a model that only reads protein letters cannot see.</p></article><article class="case"><div class="strip" data-anim aria-label="BRCA1 positions 1839 to 1849, L1844P" role="img"><span class="aa" style="--i:0">L</span><span class="aa" style="--i:1">D</span><span class="aa" style="--i:2">S</span><span class="aa" style="--i:3">V</span><span class="aa" style="--i:4">A</span><span class="aa hit k-harmful" style="--i:5"><span class="old">L</span><span class="new">P</span><i></i><span class="pos">1844</span></span><span class="aa" style="--i:6">Y</span><span class="aa" style="--i:7">Q</span><span class="aa" style="--i:8">C</span><span class="aa" style="--i:9">Q</span><span class="aa" style="--i:10">E</span></div><h3>L1844P, our worst false alarm</h3><p>The model scored it −12.93 and called it "Looks harmful". In the lab the protein kept working (score −0.233).</p><p>The BLOSUM62 rule and ESM-2 plus extras flagged it too.</p><p class="guess"><b>Our guess, not tested:</b> a proline swap usually bends a protein out of shape, which is why every method flagged it. But this position varies a lot across related proteins, and here the lab found the protein tolerated the change.</p></article></div>
+</section>
+
+<section class="sec" id="map">
+  <h2>Every swap we scored.</h2>
+  <figure class="heat" data-anim><img src="heatmap.png" alt="Heat map of ESM-2 scores for every swap at the lab-tested positions, start region above and end region below." loading="lazy"><figcaption>Columns are positions and rows are the 20 possible new letters. Red means the model found the swap surprising, blue means it did not. Black dots mark swaps the lab found broken.</figcaption></figure>
+</section>
+
+<section class="sec" id="limits">
+  <h2>What it can't do.</h2>
+  <ol class="limits">
+    <li><h3>Blind to splicing</h3><p>The lab edited DNA. Some DNA changes break how the gene's message is spliced, which a model that reads only protein letters cannot see.</p></li>
+    <li><h3>Cells in a dish, not people</h3><p>The answer key comes from cells grown in a lab. A 2025 preprint notes that results can depend on cell type.</p></li>
+    <li><h3>Stronger tools exist</h3><p>Zero-shot scoring like ours is not a new method, and AlphaMissense is a stronger predictor. Our point is to show how far a sequence-only model can be trusted, and where it breaks.</p></li>
+  </ol>
+  <div class="credits"><div><h3>Data</h3><ul><li>Findlay GM et al. (2018), Nature 562:217–222, saturation genome editing of BRCA1. <a href="https://doi.org/10.1038/s41586-018-0461-z" target="_blank" rel="noopener">doi</a></li><li>ProteinGym (Notin P et al., 2023), source of the BRCA1 table we used. <a href="https://github.com/OATML-Markslab/ProteinGym" target="_blank" rel="noopener">github</a></li></ul></div><div><h3>Models and methods</h3><ul><li>ESM-2 (Lin Z et al., 2023, Science 379:1123–1130), facebook/esm2_t33_650M_UR50D.</li><li>Masked-marginal scoring: Meier J et al. (2021), NeurIPS.</li><li>BLOSUM62: Henikoff S, Henikoff JG (1992), PNAS 89:10915–10919.</li></ul></div><div><h3>Prior work</h3><ul><li>ProteinGym already scores ESM-2 on this table.</li><li>AlphaMissense (Cheng J et al., 2023, Science 381:eadg7492) is a stronger, freely available predictor.</li></ul></div><div><h3>AI tools</h3><ul><li>Claude Code (Anthropic): planning, review, and the demo and page design.</li><li>Gemini in Google Antigravity: writing and running the project code from our spec.</li></ul></div></div>
+</section>
+</main>
+<footer class="notes" role="note"><div class="notes-in"><b>This project is a prototype and is not medical advice.</b><span>At lab-tested positions a counselor would use the lab result. This demo shows how the model does where we can check it.</span></div></footer>
+<script>(function () {
+  var root = document.documentElement;
+  root.classList.add("js");
+  var items = document.querySelectorAll("[data-anim]");
+  var calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var hit = document.querySelector(".lt.hit");
+  if (hit && !calm) {
+    var hb = hit.getBoundingClientRect();
+    var hx = hb.left + hb.width / 2, hy = hb.top + hb.height / 2;
+    document.querySelectorAll(".lt:not(.hit)").forEach(function (el) {
+      var b = el.getBoundingClientRect();
+      var d = Math.hypot(b.left + b.width / 2 - hx, b.top + b.height / 2 - hy);
+      el.style.setProperty("--rd", Math.round(2880 + d * 1.1) + "ms");
+    });
+  }
+  function tick(el, delay, span) {
+    var to = parseInt(el.dataset.to, 10);
+    if (isNaN(to)) return;
+    var t0 = performance.now() + delay;
+    el.textContent = "0";
+    function step(t) {
+      var p = Math.max(0, Math.min(1, (t - t0) / span));
+      el.textContent = Math.round(to * p).toLocaleString("en-US");
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function counts(field) {
+    field.querySelectorAll(".tick").forEach(function (el) {
+      var from = parseInt(el.dataset.from || "0", 10), of = parseInt(el.dataset.of, 10);
+      tick(el, from * 1.6, Math.max(300, of * 1.6 + 300));
+    });
+  }
+  if (calm || !("IntersectionObserver" in window)) {
+    items.forEach(function (el) { el.classList.add("in"); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) {
+        en.target.classList.add("in");
+        io.unobserve(en.target);
+        if (en.target.classList.contains("dots")) counts(en.target.closest(".field"));
+      }
+    });
+  }, { threshold: 0.25, rootMargin: "0px 0px -8% 0px" });
+  items.forEach(function (el) { io.observe(el); });
+})();
+</script>
+</body>
+</html>

@@ -19,3 +19,10 @@ CLAUDE.md
 MASTER_PROMPT.md
 PROJECT_BRIEF.md
 .claude/
+
+# misc
+*.zip
+.env
+*.log
+.DS_Store
+Thumbs.db
