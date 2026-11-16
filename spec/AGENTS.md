@@ -1,6 +1,6 @@
 # Rules for any coding agent in this repository
 
-Project: BRCA Spellcheck, a hackathon entry. Deadline Sun Nov 15 2026, 10:59 PM US Central.
+Project: FoldFlux, a hackathon entry. Deadline Sun Nov 15 2026, 10:59 PM US Central.
 
 **`BUILD_SPEC.md` is the spec.** Read it in full before changing anything. If anything disagrees with it, it wins. Never change a locked rule (its section 3) without asking a human.
 
@@ -26,7 +26,7 @@ Project: BRCA Spellcheck, a hackathon entry. Deadline Sun Nov 15 2026, 10:59 PM 
 - Never write to `data/`. Never create or edit `outputs/results/run_log.txt` by hand.
 - Never claim the method is new, that it beats or is cheaper than another tool, or that it diagnoses or classifies variants for clinical use.
 - Keep this line word for word in the write-up, notebook and demo: "This project is a prototype and is not medical advice."
-- No personal names outside the write-up's `Team:` line, and no school names anywhere (round 1 judging is blind). That includes commits: `git config user.name` must print `BRCA Spellcheck Team` and `git config user.email` must print `team@brca-spellcheck.invalid`. If either prints anything else, stop and tell the operator.
+- No personal names outside the write-up's `Team:` line, and no school names anywhere (round 1 judging is blind). That includes commits: `git config user.name` must print `FoldFlux Team` and `git config user.email` must print `team@foldflux.invalid`. If either prints anything else, stop and tell the operator.
 - Never edit or commit `CLAUDE.md` or anything in `.claude/`. Do not read, edit or commit `MASTER_PROMPT.md` or `PROJECT_BRIEF.md`: they are superseded.
 - The six reviews are described in `BUILD_SPEC.md` section 11. If you are Claude Code, run them yourself as subagents. In any other tool, hand them off as that section says.
 - Work stage by stage, commit after each stage, and report actual command output.

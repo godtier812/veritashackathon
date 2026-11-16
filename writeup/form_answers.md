@@ -2,13 +2,13 @@
 
 | Form field | Answer |
 | --- | --- |
-| Project title | BRCA Spellcheck: an AI second opinion on uncertain BRCA1 mutations |
+| Project title | FoldFlux: an AI second opinion on uncertain BRCA1 mutations |
 | Building as | Team |
 | Team name | [the humans fill in] |
 | Team members | [names, emails, schools — the humans fill this in] |
 | Track | AI + Health |
 | Starting point | Our own idea |
-| One-sentence pitch | BRCA Spellcheck helps a genetic counselor judge an "uncertain" mutation by taking the mutation and giving back whether a protein-reading AI thinks it looks harmful, with that AI graded in the open against CRISPR lab results for BRCA1. |
+| One-sentence pitch | FoldFlux helps a genetic counselor judge an "uncertain" mutation by taking the mutation and giving back whether a protein-reading AI thinks it looks harmful, with that AI graded in the open against CRISPR lab results for BRCA1. |
 | Code link | https://github.com/godtier812/veritashackathon |
 | Write-up link | https://github.com/godtier812/veritashackathon#readme |
 | Demo video link | [the humans fill in, or left blank] |
@@ -20,12 +20,12 @@
 
 ### Project title
 ```text
-BRCA Spellcheck: an AI second opinion on uncertain BRCA1 mutations
+FoldFlux: an AI second opinion on uncertain BRCA1 mutations
 ```
 
 ### One-sentence pitch
 ```text
-BRCA Spellcheck helps a genetic counselor judge an "uncertain" mutation by taking the mutation and giving back whether a protein-reading AI thinks it looks harmful, with that AI graded in the open against CRISPR lab results for BRCA1.
+FoldFlux helps a genetic counselor judge an "uncertain" mutation by taking the mutation and giving back whether a protein-reading AI thinks it looks harmful, with that AI graded in the open against CRISPR lab results for BRCA1.
 ```
 
 ### Code link

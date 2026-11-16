@@ -1,4 +1,4 @@
-# BRCA Spellcheck: build spec
+# FoldFlux: build spec
 
 This file is the complete specification for building the project. It stands alone: everything you need is written here. If another file in the repository disagrees with this one, this file wins.
 
@@ -64,7 +64,7 @@ You are the coding agent for a two-person high school hackathon team. You write 
 
 ## 1. The project in plain words
 
-**BRCA Spellcheck** is an entry in the Veritas AI International High School Hackathon 2026, AI + Health track, under "your own idea".
+**FoldFlux** is an entry in the Veritas AI International High School Hackathon 2026, AI + Health track, under "your own idea".
 
 **The question.** When a person has a genetic test, the lab often reports a "variant of uncertain significance": a mutation nobody can yet call harmful or harmless. Most genes have no lab map of which mutations are harmful, so a genetic counselor often has only computer predictions to go on. Can a small, free model that only read protein sequences be trusted for that, and where does it go blind?
 
@@ -1753,7 +1753,7 @@ A rerun with `--bugfix` overwrites the result files. **Before any `--bugfix` rer
 - Colour scale: `RdBu`, `zmin = -12`, `zmax = 12`, `zmid = 0`. Colour-bar title: `ESM score (negative = model finds the swap surprising)`.
 - **Lab-tested marker:** a small grey dot (size 3) on every cell whose swap was lab-tested and is not LOF.
 - **LOF marker:** a black dot (size 6) on every cell whose swap the lab found to be loss of function.
-- Title: `BRCA Spellcheck: ESM-2 scores for every swap at the lab-tested positions`. Subtitle text under it: the disclaimer.
+- Title: `FoldFlux: ESM-2 scores for every swap at the lab-tested positions`. Subtitle text under it: the disclaimer.
 
 **The before/after rule (section 3, rules 11 and 15).**
 
@@ -1878,7 +1878,7 @@ A refusal is: the refusal message, a horizontal rule, then the same two fixed no
 #### Gradio components
 
 Use `gradio.Blocks`:
-- `gr.Markdown` — title `# BRCA Spellcheck` and two sentences: what the tool is, and "BRCA1 is our exam, not the use case: it is one of the few genes with a lab answer key, so we can check the model here."
+- `gr.Markdown` — title `# FoldFlux` and two sentences: what the tool is, and "BRCA1 is our exam, not the use case: it is one of the few genes with a lab answer key, so we can check the model here."
 - `gr.Textbox(label="Mutation", placeholder="C61G")`
 - `gr.Button("Check")`
 - `gr.Markdown` — the output.
@@ -1893,7 +1893,7 @@ Starts with this header (the Space reads it), then one paragraph of description 
 
 ```
 ---
-title: BRCA Spellcheck
+title: FoldFlux
 emoji: 🧬
 colorFrom: red
 colorTo: blue
@@ -2522,7 +2522,7 @@ The reviewer's `test-runner` runs `.venv/Scripts/python.exe -m pytest tests/ -q`
 ### 12.1 The organisers' template (use these headings, in this order)
 
 ```
-# BRCA Spellcheck: an AI second opinion on uncertain BRCA1 mutations
+# FoldFlux: an AI second opinion on uncertain BRCA1 mutations
 
 **Track:** Health
 **Team:** [names — the humans fill this in]
@@ -2645,13 +2645,13 @@ Links marked above are as recorded by the team; a human should open each once be
 
 | Form field | Answer |
 | --- | --- |
-| Project title | BRCA Spellcheck: an AI second opinion on uncertain BRCA1 mutations |
+| Project title | FoldFlux: an AI second opinion on uncertain BRCA1 mutations |
 | Building as | Team |
 | Team name | [the humans fill in] |
 | Team members | [names, emails, schools — the humans fill in] |
 | Track | AI + Health |
 | Starting point | Our own idea |
-| One-sentence pitch | BRCA Spellcheck helps a genetic counselor judge an "uncertain" mutation by taking the mutation and giving back whether a protein-reading AI thinks it looks harmful, with that AI graded in the open against CRISPR lab results for BRCA1. |
+| One-sentence pitch | FoldFlux helps a genetic counselor judge an "uncertain" mutation by taking the mutation and giving back whether a protein-reading AI thinks it looks harmful, with that AI graded in the open against CRISPR lab results for BRCA1. |
 | Code link | [GitHub repository address] |
 | Write-up link | [the README on GitHub, or a shared document] |
 | Demo video link | [the humans fill in, or left blank] |

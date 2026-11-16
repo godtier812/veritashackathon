@@ -1,4 +1,4 @@
-"""Self-contained Gradio demo for BRCA Spellcheck (arm 2 zero-shot ESM-2 lookup)."""
+"""Self-contained Gradio demo for FoldFlux (arm 2 zero-shot ESM-2 lookup)."""
 
 import bisect
 import json
@@ -1010,7 +1010,7 @@ def failure_row(kind: str) -> dict | None:
 def header_html() -> str:
     return (
         '<header class="top">'
-        "<h1>BRCA Spellcheck</h1>"
+        "<h1>FoldFlux</h1>"
         "<p>Type one letter change in the BRCA1 protein to see the model's call, the lab's answer, "
         "and whether the two agree. BRCA1 is our exam, not the use case.</p>"
         "</header>"
@@ -1255,7 +1255,7 @@ theme = gr.themes.Base(
 css_text: str = (APP_DIR / "style.css").read_text(encoding="utf-8") if (APP_DIR / "style.css").exists() else ""
 
 
-with gr.Blocks(title="BRCA Spellcheck") as demo:
+with gr.Blocks(title="FoldFlux") as demo:
     gr.HTML(header_html())
     with gr.Tabs(selected="check", elem_classes=["tabs-main"]) as tabs:
         with gr.Tab("Check", id="check"):

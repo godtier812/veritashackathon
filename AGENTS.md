@@ -1,6 +1,6 @@
 # Rules for any coding agent in this repository
 
-Project: BRCA Spellcheck, a hackathon entry. Deadline Sun Nov 15 2026, 10:59 PM US Central.
+Project: FoldFlux, a hackathon entry. Deadline Sun Nov 15 2026, 10:59 PM US Central.
 
 **`BUILD_SPEC.md` is the spec.** Read it in full before changing anything. If anything disagrees with it, it wins. Never change a locked rule (its section 3) without asking a human.
 

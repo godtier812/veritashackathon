@@ -15,7 +15,7 @@ import pandas as pd
 from src import config, load
 
 FIGURE_TITLE: str = (
-    "BRCA Spellcheck: ESM-2 scores for every swap at the lab-tested positions"
+    "FoldFlux: ESM-2 scores for every swap at the lab-tested positions"
 )
 COLORBAR_LABEL: str = "ESM score (negative = model finds the swap surprising)"
 HIDDEN_END_NOTE: str = "End region hidden until the one test run is done."
@@ -423,7 +423,7 @@ def main(argv: list[str] | None = None) -> int:
     """CLI entry point for generating outputs/heatmap.png."""
     config.set_seeds()
     parser = argparse.ArgumentParser(
-        description="Render the BRCA Spellcheck static ESM-2 heat map PNG."
+        description="Render the FoldFlux static ESM-2 heat map PNG."
     )
     parser.parse_args(argv)
     try:

@@ -499,7 +499,7 @@ TEMPLATE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BRCA Spellcheck</title>
+<title>FoldFlux</title>
 <meta name="description" content="A prototype that checks a protein language model's calls on BRCA1 letter changes against lab measurements.">
 <script>document.documentElement.classList.add("js")</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -511,7 +511,7 @@ TEMPLATE = """<!doctype html>
 <a class="skip" href="#main">Skip to content</a>
 <header class="bar">
   <div class="bar-in">
-    <a class="name" href="#top">BRCA Spellcheck</a>
+    <a class="name" href="#top">FoldFlux</a>
     <nav aria-label="Sections">
       <a href="#wins">Highlights</a>
       <a href="#how">How it works</a>

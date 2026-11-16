@@ -1,4 +1,4 @@
-# BRCA Spellcheck: build spec
+# FoldFlux: build spec
 
 This file is the complete specification for building the project. It stands alone: everything you need is written here. If another file in the repository disagrees with this one, this file wins.
 
@@ -54,7 +54,7 @@ You are the coding agent for a two-person high school hackathon team. You write 
 10. **If you are stuck on one problem for 20 minutes**, stop and propose a simpler route, with what it costs.
 11. **Do not add features, files or dependencies** that are not in this spec without asking.
 12. **Code style:** simple and readable. Lowercase `snake_case` names. Short comments only where a line is not obvious. No clever one-liners. Type hints on every function. Every module has a one-paragraph docstring at the top saying what it does.
-13. **Commit after each stage** with the commit message given in that stage. Use `git add -A` then `git commit -m "<message>"`. Never commit anything that looks like a token or password. Before your first commit, run `git config user.name` and `git config user.email`. They must print `BRCA Spellcheck Team` and `team@brca-spellcheck.invalid` (round 1 judging is blind, so commits must not carry a personal name or address). If they print anything else, stop and tell the operator.
+13. **Commit after each stage** with the commit message given in that stage. Use `git add -A` then `git commit -m "<message>"`. Never commit anything that looks like a token or password. Before your first commit, run `git config user.name` and `git config user.email`. They must print `FoldFlux Team` and `team@foldflux.invalid` (round 1 judging is blind, so commits must not carry a personal name or address). If they print anything else, stop and tell the operator.
 14. **Windows and PowerShell are the main environment.** Run every command from the repository root. Colab notes appear only where Colab differs.
 15. **If you are unsure about a library detail** (a function name, an argument), check the installed package (`python -c "help(...)"`) or its documentation. Do not guess. Several pinned libraries are recent major versions (transformers 5, Gradio 6, Plotly 7).
 16. **If a download fails** (packages, model weights), report the exact error. Do not switch to a different model or source without asking.
@@ -64,7 +64,7 @@ You are the coding agent for a two-person high school hackathon team. You write 
 
 ## 1. The project in plain words
 
-**BRCA Spellcheck** is an entry in the Veritas AI International High School Hackathon 2026, AI + Health track, under "your own idea".
+**FoldFlux** is an entry in the Veritas AI International High School Hackathon 2026, AI + Health track, under "your own idea".
 
 **The question.** When a person has a genetic test, the lab often reports a "variant of uncertain significance": a mutation nobody can yet call harmful or harmless. Most genes have no lab map of which mutations are harmful, so a genetic counselor often has only computer predictions to go on. Can a small, free model that only read protein sequences be trusted for that, and where does it go blind?
 
@@ -1767,7 +1767,7 @@ A rerun with `--bugfix` overwrites the result files. **Before any `--bugfix` rer
 - Colour scale: `Reds_r`, `zmin = -15`, `zmax = 0` (no `zmid`). Colour-bar title: `ESM score (darker = model finds the swap more surprising)`.
 - **Lab-tested marker:** a small grey dot (size 3) on every cell whose swap was lab-tested and is not LOF.
 - **LOF marker:** a black dot (size 6) on every cell whose swap the lab found to be loss of function. Give it a thin white outline so it stays visible on dark cells.
-- Title: `BRCA Spellcheck: ESM-2 scores for every swap at the lab-tested positions`. Subtitle text under it: the disclaimer.
+- Title: `FoldFlux: ESM-2 scores for every swap at the lab-tested positions`. Subtitle text under it: the disclaimer.
 
 **The before/after rule (section 3, rules 11 and 15).**
 
@@ -1898,7 +1898,7 @@ A refusal is: the refusal message, a horizontal rule, then the same two fixed no
 #### Gradio components
 
 Use `gradio.Blocks`:
-- `gr.Markdown` — title `# BRCA Spellcheck` and two sentences: what the tool is, and "BRCA1 is our exam, not the use case: it is one of the few genes with a lab answer key, so we can check the model here."
+- `gr.Markdown` — title `# FoldFlux` and two sentences: what the tool is, and "BRCA1 is our exam, not the use case: it is one of the few genes with a lab answer key, so we can check the model here."
 - `gr.Textbox(label="Mutation", placeholder="C61G")`
 - `gr.Button("Check")`
 - `gr.Markdown` — the output.
@@ -1913,7 +1913,7 @@ Starts with this header (the Space reads it), then one paragraph of description 
 
 ```
 ---
-title: BRCA Spellcheck
+title: FoldFlux
 emoji: 🧬
 colorFrom: red
 colorTo: blue
@@ -2583,7 +2583,7 @@ If a review finds a problem: fix exactly what it names, re-run the affected stag
 ### 12.1 The organisers' template (use these headings, in this order)
 
 ```
-# BRCA Spellcheck: an AI second opinion on uncertain BRCA1 mutations
+# FoldFlux: an AI second opinion on uncertain BRCA1 mutations
 
 **Track:** Health
 **Team:** [names — the humans fill this in]
@@ -2711,13 +2711,13 @@ Links marked above are as recorded by the team; a human should open each once be
 
 | Form field | Answer |
 | --- | --- |
-| Project title | BRCA Spellcheck: an AI second opinion on uncertain BRCA1 mutations |
+| Project title | FoldFlux: an AI second opinion on uncertain BRCA1 mutations |
 | Building as | Team |
 | Team name | [the humans fill in] |
 | Team members | [names, emails, schools — the humans fill in] |
 | Track | AI + Health |
 | Starting point | Our own idea |
-| One-sentence pitch | BRCA Spellcheck helps a genetic counselor judge an "uncertain" mutation by taking the mutation and giving back whether a protein-reading AI thinks it looks harmful, with that AI graded in the open against CRISPR lab results for BRCA1. |
+| One-sentence pitch | FoldFlux helps a genetic counselor judge an "uncertain" mutation by taking the mutation and giving back whether a protein-reading AI thinks it looks harmful, with that AI graded in the open against CRISPR lab results for BRCA1. |
 | Code link | [GitHub repository address] |
 | Write-up link | [the README on GitHub, or a shared document] |
 | Demo video link | [the humans fill in, or left blank] |

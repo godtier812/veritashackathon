@@ -1,4 +1,4 @@
-"""Central configuration holding all constants, filesystem paths, and seed/hashing helpers for BRCA Spellcheck."""
+"""Central configuration holding all constants, filesystem paths, and seed/hashing helpers for FoldFlux."""
 
 import hashlib
 import random

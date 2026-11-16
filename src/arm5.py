@@ -1,4 +1,4 @@
-"""Exploratory arm 5 for BRCA Spellcheck: arm 2's scores with a balanced cutoff, added after the test run.
+"""Exploratory arm 5 for FoldFlux: arm 2's scores with a balanced cutoff, added after the test run.
 
 Arm 2 uses the "catch at least 90% of harmful rows" cutoff, which accepts many false alarms.
 Arm 5 keeps the same ESM-2 scores and changes only the cutoff rule: the cutoff that maximises

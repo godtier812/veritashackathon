@@ -1,4 +1,4 @@
-# BRCA Spellcheck: an AI second opinion on uncertain BRCA1 mutations
+# FoldFlux: an AI second opinion on uncertain BRCA1 mutations
 
 **Track:** Health
 **Team:** [names — the humans fill this in]
@@ -13,7 +13,7 @@ A genetic counselor sitting with a patient whose test returned a "variant of unc
 
 ## What we built
 
-BRCA Spellcheck takes a single-letter BRCA1 mutation (`C61G`) and outputs a verdict (`Looks harmful`, `Can't tell`, `Looks harmless`), score, start-region cutoffs (`-7.75`, `-3.03` <!-- app/app_config.json cutoff_b cutoff_a -->), the CRISPR lab answer, and the verdict's held-out track record. For `C61G`, the demo returns `Looks harmful`, score `-10.50` <!-- app/app_data.csv C61G esm_score -->, `Loss of function (harmful). Lab function score -1.738.` <!-- app/app_data.csv C61G lab_score -->, and held-out track record `196 of 288` clear-class mutations (`68.1%`; `92` `FUNC` harmless, `29` `INT` in between <!-- band_counts.csv looks_harmful -->). BRCA1 is the exam, not the use case: Findlay et al. (2018) measured 96.5% <!-- BUILD_SPEC.md section 1 --> of possible single-letter DNA changes at these positions, so a counselor would use the lab result there while using this exam to judge sequence-only models on unmapped genes.
+FoldFlux takes a single-letter BRCA1 mutation (`C61G`) and outputs a verdict (`Looks harmful`, `Can't tell`, `Looks harmless`), score, start-region cutoffs (`-7.75`, `-3.03` <!-- app/app_config.json cutoff_b cutoff_a -->), the CRISPR lab answer, and the verdict's held-out track record. For `C61G`, the demo returns `Looks harmful`, score `-10.50` <!-- app/app_data.csv C61G esm_score -->, `Loss of function (harmful). Lab function score -1.738.` <!-- app/app_data.csv C61G lab_score -->, and held-out track record `196 of 288` clear-class mutations (`68.1%`; `92` `FUNC` harmless, `29` `INT` in between <!-- band_counts.csv looks_harmful -->). BRCA1 is the exam, not the use case: Findlay et al. (2018) measured 96.5% <!-- BUILD_SPEC.md section 1 --> of possible single-letter DNA changes at these positions, so a counselor would use the lab result there while using this exam to judge sequence-only models on unmapped genes.
 
 ## What we added
 

@@ -4,7 +4,7 @@ Paste everything below the line as your first message.
 
 ---
 
-You are the coding agent for a two-person hackathon team. The project is called BRCA Spellcheck. The deadline is tonight, Sunday Nov 15 2026, 10:59 PM US Central.
+You are the coding agent for a two-person hackathon team. The project is called FoldFlux. The deadline is tonight, Sunday Nov 15 2026, 10:59 PM US Central.
 
 The complete specification is `BUILD_SPEC.md` in the repository root. It is long (about 2,800 lines) and it stands alone. Standing rules are in `AGENTS.md`.
 

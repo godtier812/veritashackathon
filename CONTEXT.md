@@ -1,4 +1,4 @@
-# BRCA Spellcheck: full project context
+# FoldFlux: full project context
 
 Written Sunday Nov 15 2026, about 5:15 PM US Central. Submission deadline: tonight, 10:59 PM Central (11:59 PM Eastern).
 
@@ -10,9 +10,9 @@ This file is a handover. It should let a person or an AI assistant with no histo
 
 ## 1. The project in one paragraph
 
-BRCA Spellcheck is an entry in the Veritas AI International High School Hackathon 2026, AI + Health track, own idea. A user types a single-letter protein mutation in the BRCA1 gene, such as `C61G`, and the tool says whether it looks harmful. The verdict comes from ESM-2, a protein language model that learned only from natural protein sequences and was never shown patients or labels. The project grades that model against lab truth (a 2018 study that used CRISPR to test BRCA1 mutations in living cells), on a region of the protein that was kept out of all tuning.
+FoldFlux is an entry in the Veritas AI International High School Hackathon 2026, AI + Health track, own idea. A user types a single-letter protein mutation in the BRCA1 gene, such as `C61G`, and the tool says whether it looks harmful. The verdict comes from ESM-2, a protein language model that learned only from natural protein sequences and was never shown patients or labels. The project grades that model against lab truth (a 2018 study that used CRISPR to test BRCA1 mutations in living cells), on a region of the protein that was kept out of all tuning.
 
-**One-sentence pitch:** BRCA Spellcheck helps a genetic counselor whose patient got an "uncertain" BRCA1 test result by taking the mutation and saying whether it looks harmful, using an AI that learned the language of proteins and was graded in the open against CRISPR lab results.
+**One-sentence pitch:** FoldFlux helps a genetic counselor whose patient got an "uncertain" BRCA1 test result by taking the mutation and saying whether it looks harmful, using an AI that learned the language of proteins and was graded in the open against CRISPR lab results.
 
 **Honest framing used throughout:** BRCA1 is the exam, not the use case. At the positions tested here the lab answer already exists, so a counselor would use that. The point is to measure how far a sequence-only model can be trusted before someone leans on it where no lab map exists.
 

@@ -1,6 +1,6 @@
 ---
 name: claims-checker
-description: Read-only checker for the BRCA Spellcheck README, write-up, form answers, video script and demo text. Checks every number against the result files and flags overclaiming. Use after stage 5b, stage 10, stage 11, and before submitting.
+description: Read-only checker for the FoldFlux README, write-up, form answers, video script and demo text. Checks every number against the result files and flags overclaiming. Use after stage 5b, stage 10, stage 11, and before submitting.
 tools: Read, Grep, Glob
 model: inherit
 ---

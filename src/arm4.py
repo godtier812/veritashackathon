@@ -1,4 +1,4 @@
-"""Exploratory arm 4 for BRCA Spellcheck: a stronger zero-shot model, added after the test run.
+"""Exploratory arm 4 for FoldFlux: a stronger zero-shot model, added after the test run.
 
 Arm 4 scores every swap with ESM-C 600M, using the same hide-a-letter code as arm 2.
 It was added after the one test run, with knowledge of arm 2's end-region result, so it

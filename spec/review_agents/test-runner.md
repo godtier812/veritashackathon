@@ -1,6 +1,6 @@
 ---
 name: test-runner
-description: Runs the BRCA Spellcheck tests and reports results briefly. Use after every build stage.
+description: Runs the FoldFlux tests and reports results briefly. Use after every build stage.
 tools: Bash, Read, Glob
 model: haiku
 ---

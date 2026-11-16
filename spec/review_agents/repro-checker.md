@@ -1,6 +1,6 @@
 ---
 name: repro-checker
-description: Checks the BRCA Spellcheck project runs from a fresh copy, the way a judge would run it. Use after the notebook is built and right before submitting.
+description: Checks the FoldFlux project runs from a fresh copy, the way a judge would run it. Use after the notebook is built and right before submitting.
 tools: Bash, Read, Glob
 model: inherit
 ---

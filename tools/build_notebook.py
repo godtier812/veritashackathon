@@ -164,9 +164,9 @@ def build_notebook() -> nbformat.NotebookNode:
     e_non_lof = e_int + e_func
 
     # Cell 1 — Title, summary, disclaimer, exam framing, what is already known
-    cell_1_md = f"""# BRCA Spellcheck: an AI second opinion on uncertain BRCA1 mutations
+    cell_1_md = f"""# FoldFlux: an AI second opinion on uncertain BRCA1 mutations
 
-When a genetic test reports a "variant of uncertain significance" (VUS) — a single-letter change in a protein that nobody can yet call harmful or harmless — a genetic counselor sitting with a patient often has only computer predictions to lean on, because most human genes have no experimental lab map. **BRCA Spellcheck** asks how far a free, sequence-only protein language model (`{config.MODEL_ID}`) can be trusted on `{config.N_ROWS:,}` lab-tested single-letter changes across `{config.N_POSITIONS}` positions of the `{config.PROTEIN_LENGTH:,}`-letter BRCA1 protein, how it compares against simple baselines when tuned on one domain (`positions {start_lo}–{start_hi}`) and tested once on a held-out domain (`positions {end_lo}–{end_hi}`), and where it goes blind.
+When a genetic test reports a "variant of uncertain significance" (VUS) — a single-letter change in a protein that nobody can yet call harmful or harmless — a genetic counselor sitting with a patient often has only computer predictions to lean on, because most human genes have no experimental lab map. **FoldFlux** asks how far a free, sequence-only protein language model (`{config.MODEL_ID}`) can be trusted on `{config.N_ROWS:,}` lab-tested single-letter changes across `{config.N_POSITIONS}` positions of the `{config.PROTEIN_LENGTH:,}`-letter BRCA1 protein, how it compares against simple baselines when tuned on one domain (`positions {start_lo}–{start_hi}`) and tested once on a held-out domain (`positions {end_lo}–{end_hi}`), and where it goes blind.
 
 *{config.DISCLAIMER}*
 

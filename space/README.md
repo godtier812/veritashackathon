@@ -1,5 +1,5 @@
 ---
-title: BRCA Spellcheck
+title: FoldFlux
 emoji: 🧬
 colorFrom: red
 colorTo: blue
@@ -9,7 +9,7 @@ app_file: app.py
 pinned: false
 ---
 
-# BRCA Spellcheck
+# FoldFlux
 
 This project is a prototype and is not medical advice.
 

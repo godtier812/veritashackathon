@@ -1,4 +1,4 @@
-"""Exploratory arm 6 for BRCA Spellcheck: an ensemble built from ideas the leading models use.
+"""Exploratory arm 6 for FoldFlux: an ensemble built from ideas the leading models use.
 
 On ProteinGym's leaderboard for this lab table, 15 zero-shot models rank above ESM-2 650M.
 Most of them add one of three things to a single protein language model:

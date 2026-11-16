@@ -1,13 +1,13 @@
 ---
-title: BRCA Spellcheck Explorer
+title: FoldFlux Explorer
 sdk: static
 app_file: index.html
 pinned: false
 ---
 
-# BRCA Spellcheck Explorer
+# FoldFlux Explorer
 
-A static, read-only view of the BRCA Spellcheck results: the BRCA1 structure in 3D, every lab-tested swap, the model's call and the lab's answer.
+A static, read-only view of the FoldFlux results: the BRCA1 structure in 3D, every lab-tested swap, the model's call and the lab's answer.
 
 This project is a prototype and is not medical advice.
 

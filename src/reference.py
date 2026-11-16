@@ -1,4 +1,4 @@
-"""Post-test context for BRCA Spellcheck: how our numbers sit next to public ones.
+"""Post-test context for FoldFlux: how our numbers sit next to public ones.
 
 This module runs only after the one test run has succeeded. It adds no arm and
 tunes nothing we report as ours. It does two things. First, it reads ProteinGym's

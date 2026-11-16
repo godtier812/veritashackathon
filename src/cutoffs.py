@@ -1,4 +1,4 @@
-"""Pure cutoff selection, flagging, band verdict, and outcome accounting rules for BRCA Spellcheck."""
+"""Pure cutoff selection, flagging, band verdict, and outcome accounting rules for FoldFlux."""
 
 import numpy as np
 from numpy.typing import ArrayLike

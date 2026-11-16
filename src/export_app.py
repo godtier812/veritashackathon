@@ -1,4 +1,4 @@
-"""Export self-contained data and configuration files for the BRCA Spellcheck Gradio demo."""
+"""Export self-contained data and configuration files for the FoldFlux Gradio demo."""
 
 import argparse
 import json

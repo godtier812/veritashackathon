@@ -1,4 +1,4 @@
-"""Single test-run evaluation on the held-out end region and start-region rehearsal for BRCA Spellcheck."""
+"""Single test-run evaluation on the held-out end region and start-region rehearsal for FoldFlux."""
 
 import argparse
 from datetime import datetime
@@ -985,7 +985,7 @@ def main(argv: list[str] | None = None) -> int:
     """CLI entry point for the start-region self-check or the single end-region test run."""
     config.set_seeds()
     parser = argparse.ArgumentParser(
-        description="Run the BRCA Spellcheck start-region self-check or held-out end-region evaluation."
+        description="Run the FoldFlux start-region self-check or held-out end-region evaluation."
     )
     parser.add_argument(
         "--selfcheck-start",

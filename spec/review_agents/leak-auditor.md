@@ -1,6 +1,6 @@
 ---
 name: leak-auditor
-description: Read-only reviewer that checks the BRCA Spellcheck code for test-set leakage before the one test run. Use before checkpoint B and after any change to src/.
+description: Read-only reviewer that checks the FoldFlux code for test-set leakage before the one test run. Use before checkpoint B and after any change to src/.
 tools: Read, Grep, Glob
 model: inherit
 ---

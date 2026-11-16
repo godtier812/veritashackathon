@@ -180,7 +180,7 @@ A screen recording with a voice-over is enough.
 
 ---
 
-## How BRCA Spellcheck maps to the rubric
+## How FoldFlux maps to the rubric
 
 | Requirement | How the project meets it |
 | --- | --- |
