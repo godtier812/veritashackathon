@@ -11,14 +11,12 @@ pinned: false
 
 # BRCA Spellcheck
 
-# BRCA Spellcheck
-
 This project is a prototype and is not medical advice.
 
 One Space, two pages:
 
 - `/` is the simple tool: type one BRCA1 letter change (C61G, p.Cys61Gly) to see the model's call, the lab's answer and whether they agree.
-- `/explorer/` is the same data on the BRCA1 structure, with every lab-tested swap, a position scrubber and the scoreboard. Each tool answer has an "Open in 3D" button that opens the explorer on that mutation (`/explorer/?m=C61G`).
+- `/explorer/` is the same data on the BRCA1 structure, with every lab-tested swap, a position scrubber and the scoreboard. Each tool answer has an "Open <mutation> in 3D" button that opens the explorer on that mutation (`/explorer/?m=C61G`).
 
 BRCA1 is our exam, not the use case. Both pages read cached scores and lab results; no model runs here. Structures (PDB 1JM7 and 1T15) are shown for orientation only; the model saw sequence alone.
 

@@ -905,7 +905,7 @@ def explorer_link(mutant: str) -> str:
     return (
         f'<a class="to-3d" href="{esc(explorer_url)}?m={esc(mutant)}" target="_blank" rel="noopener">'
         f"Open {esc(mutant)} in 3D</a>"
-        '<p class="to-3d-note">See this swap on the BRCA1 structure, with every other letter the model scored at this position.</p>'
+        '<p class="to-3d-note">See where this swap sits on the BRCA1 structure (orientation only; some positions are not in the crystal structure), with every other letter the model scored at this position.</p>'
     )
 
 
