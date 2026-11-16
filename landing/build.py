@@ -291,6 +291,15 @@ def wins_block():
             "of the time, shown one harmful and one harmless change, the model ranks the harmful one as worse.",
             f"AUROC {auc['arm2']:.4f} on the held-out test; 50% would be a coin flip, and ties count as half.{extra}",
         ))
+    if bootstrap and "esm_minus_blosum" in bootstrap:
+        g = bootstrap["esm_minus_blosum"]
+        cards.append(card(
+            f"+{round(g['point'] * 100)} <small>points</small>",
+            "ahead of a classic substitution table (BLOSUM62) on that ranking measure, a gap that holds up when we resample the test.",
+            f"AUROC gain {signed(g['point'], 3)} on the held-out test; 95% range {signed(g['low'], 3)} to {signed(g['high'], 3)} "
+            f"over {int(bootstrap.get('n_resamples_used', 0)):,} resamples of the {int(bootstrap.get('n_positions', 0))} "
+            "end-region positions. The whole range is above zero.",
+        ))
     cards.append(card(
         "0",
         "lab results the model learned from. It only read natural protein sequences.",
@@ -305,19 +314,6 @@ def wins_block():
             f"AUROC {am['end']['auroc_arm2_same_rows']:.4f} vs {am['end']['auroc']:.4f} on the same held-out rows; "
             f"the gap ({signed(d['point'], 3)}, 95% range {signed(d['low'], 3)} to {signed(d['high'], 3)}) includes zero. "
             "Our model reads only the protein sequence; AlphaMissense also uses 3D structure and population data. We do not claim to be better.",
-            "checked after the test",
-        ))
-    pg = jfile("reference_proteingym.json")
-    if pg and "spearman" in pg:
-        sp = pg["spearman"]
-        rank, total = int(sp["our_model_rank"]), int(pg["n_models"])
-        top = -(-100 * rank // total)
-        top = -(-top // 5) * 5
-        cards.append(card(
-            f"Top {top}%",
-            f"is where the model we built on ranks, among {total} models on ProteinGym, a widely used public benchmark, for this BRCA1 data.",
-            f"ESM-2 650M ranks {rank} of {total} zero-shot models by Spearman (median {sp['median_value']:.3f}, "
-            f"ESM-2 {sp['our_model_value']:.3f}). Our own run scored {pg['our_spearman_all_1837']:.3f}: close, but not identical.",
             "checked after the test",
         ))
     if not cards:
@@ -521,7 +517,6 @@ TEMPLATE = """<!doctype html>
       <a href="#how">How it works</a>
       <a href="#results">Results</a>
       <a href="#fails">Where it fails</a>
-      <a href="#limits">Limits</a>
     </nav>
     {{cta}}
   </div>
@@ -574,13 +569,8 @@ TEMPLATE = """<!doctype html>
   {{heat}}
 </section>
 
-<section class="sec" id="limits">
-  <h2>What it can't do.</h2>
-  <ol class="limits">
-    <li><h3>Blind to splicing</h3><p>The lab edited DNA. Some DNA changes break how the gene's message is spliced, which a model that reads only protein letters cannot see.</p></li>
-    <li><h3>Cells in a dish, not people</h3><p>The answer key comes from cells grown in a lab. A 2025 preprint notes that results can depend on cell type.</p></li>
-    <li><h3>Stronger tools exist</h3><p>Zero-shot scoring like ours is not a new method, and AlphaMissense is a stronger predictor. Our point is to show how far a sequence-only model can be trusted, and where it breaks.</p></li>
-  </ol>
+<section class="sec" id="credits">
+  <h2>Sources and credits.</h2>
   <div class="credits">{{credits}}</div>
 </section>
 </main>
