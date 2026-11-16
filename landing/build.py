@@ -360,7 +360,10 @@ def build(demo_url):
             f'<p class="lead2">{esc(s1)} Its AUROC was {auc["arm2"]:.3f} against {auc["arm1"]:.3f} for BLOSUM62.</p>'
         )
     cta = (
-        f'<a class="btn" href="{esc(demo_url)}">Try the demo</a>' if demo_url else ""
+        f'<a class="btn" href="{esc(demo_url)}">Try the demo</a>'
+        f' <a class="btn btn-alt" href="{esc(demo_url.rstrip("/") + "/explorer/")}">Explore in 3D</a>'
+        if demo_url
+        else ""
     )
     lab_line = (
         f"In the lab C61G scored {signed(c61g_lab, 3)}, well into broken. The model's score was {signed(c61g_esm, 2)}."

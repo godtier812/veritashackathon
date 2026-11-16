@@ -24,7 +24,14 @@ def explorer_slash():
     return RedirectResponse("/explorer/")
 
 
+@server.get("/landing", include_in_schema=False)
+def landing_slash():
+    return RedirectResponse("/landing/")
+
+
 server.mount("/explorer", StaticFiles(directory=root / "explorer", html=True), name="explorer")
+if (root / "landing" / "index.html").exists():
+    server.mount("/landing", StaticFiles(directory=root / "landing", html=True), name="landing")
 server = gr.mount_gradio_app(
     server,
     tool.demo,
