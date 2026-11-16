@@ -35,3 +35,4 @@ PyTorch, Hugging Face Transformers, NumPy, pandas, SciPy, scikit-learn, Biopytho
 ## The organisers
 
 Veritas AI hackathon project briefs, Hacker Guide, and sample submission.
+- AlphaFold Protein Structure Database model of BRCA1 (AF-P38398-F1, v6; Jumper J et al., 2021, *Nature* 596:583–589): https://alphafold.ebi.ac.uk/files/AF-P38398-F1-model_v6.pdb — used only for the burial part of the exploratory `arm6`.

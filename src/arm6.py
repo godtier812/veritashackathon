@@ -363,7 +363,7 @@ def run_writeup() -> int:
         if path.is_file() and _LIMITS_ANCHOR in path.read_text(encoding="utf-8"):
             print(arm4._insert_once(path, _LIMITS_ANCHOR, paragraph + "\n", _PARAGRAPH_MARKER, after=False))
     credits = config.ROOT / "writeup" / "credits.md"
-    if credits.is_file() and "AF-P38398-F1" not in credits.read_text(encoding="utf-8"):
+    if credits.is_file() and "AF-P38398-F1-model_v6" not in credits.read_text(encoding="utf-8"):
         arm4._write_text(credits.read_text(encoding="utf-8").rstrip("\n") + credit + "\n", credits)
         print("credits.md: updated")
     print("Write-up updated.")
