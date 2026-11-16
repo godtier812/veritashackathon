@@ -421,8 +421,8 @@ def credits_block():
             "AlphaMissense (Cheng J et al., 2023, Science 381:eadg7492) is a stronger, freely available predictor.",
         ]),
         ("AI tools", [
-            "Claude Code (Anthropic): planning, review, and the demo and page design.",
-            "Gemini in Google Antigravity: writing and running the project code from our spec.",
+            "Claude Code (Anthropic): helped with planning, the build specification, some of the code (Arm 4), review, the demo and page design, and drafting the write-up and video script.",
+            "Gemini in Google Antigravity: helped with writing and running the project code from our spec.",
         ]),
     ]
     return "".join(
@@ -524,7 +524,7 @@ TEMPLATE = """<!doctype html>
 <main id="main">
 <section class="hero" id="top">
   <h1>A spellchecker for proteins, graded against the lab.</h1>
-  <p class="lead">BRCA1 is written in {{protein_length}} letters, one per amino acid. We asked a protein language model which single-letter changes look like typos, then checked its calls against {{n_lab}} lab measurements.</p>
+  <p class="lead">BRCA1 is the best-known breast and ovarian cancer gene. It is written in {{protein_length}} letters, one per amino acid. We asked a protein language model which single-letter changes look like typos, then checked its calls against {{n_lab}} lab measurements.</p>
   {{hero_seq}}
   <p class="cap">The first 101 letters of BRCA1. The red underline marks how harmful the model finds changes at each position, on average across all 19 possible swaps. Darker means more harmful, compared with the other positions here. Then C61G: the C at position 61 becomes a G. {{c61g_line}}</p>
   <div class="hero-cta">{{cta}}<a class="link" href="#results">See the results</a></div>

@@ -1011,7 +1011,7 @@ def header_html() -> str:
     return (
         '<header class="top">'
         "<h1>FoldFlux</h1>"
-        "<p>Type one letter change in the BRCA1 protein to see the model's call, the lab's answer, "
+        "<p>BRCA1 is the best-known breast and ovarian cancer gene. Type one letter change in the BRCA1 protein to see the model's call, the lab's answer, "
         "and whether the two agree. BRCA1 is our exam, not the use case.</p>"
         "</header>"
     )
