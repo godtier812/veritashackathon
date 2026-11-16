@@ -1,0 +1,40 @@
+{
+  "what": "EXPLORATORY arm 5 on the held-out end region, run once after the headline test run. Same 1,166 rows and same ESM-2 scores as arm 2; only the cutoff differs. Not a replacement for arm 2.",
+  "cutoff_rule": "highest start-region catch rate minus false-alarm rate; a tie goes to the higher cutoff",
+  "cutoff": 6.958152,
+  "arm2_cutoff": 3.034498,
+  "end": {
+    "n_harmful": 267,
+    "n_harmless": 899,
+    "harmful_caught": 220,
+    "harmful_missed": 47,
+    "false_alarms": 136,
+    "harmless_cleared": 763,
+    "catch_rate_percent": 82.4,
+    "false_alarm_rate_percent": 15.1,
+    "accuracy_percent": 84.3
+  },
+  "arm2_end_same_rows": {
+    "n_harmful": 267,
+    "n_harmless": 899,
+    "harmful_caught": 252,
+    "harmful_missed": 15,
+    "false_alarms": 437,
+    "harmless_cleared": 462,
+    "catch_rate_percent": 94.4,
+    "false_alarm_rate_percent": 48.6,
+    "accuracy_percent": 61.2
+  },
+  "arm5_minus_arm2_accuracy_points": {
+    "point": 23.070325900514575,
+    "low": 19.683196071339136,
+    "high": 27.11320821509485,
+    "n_positions": 225,
+    "n_resamples_used": 1000
+  },
+  "int_rows_end": {
+    "n_int": 96,
+    "flagged": 44
+  },
+  "sentence": "On the held-out region the balanced cutoff gave more correct calls than `arm2`."
+}
