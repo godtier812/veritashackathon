@@ -41,6 +41,67 @@ def read_config_constants():
     return found
 
 
+three = {
+    "ALA": "A", "CYS": "C", "ASP": "D", "GLU": "E", "PHE": "F", "GLY": "G", "HIS": "H", "ILE": "I",
+    "LYS": "K", "LEU": "L", "MET": "M", "ASN": "N", "PRO": "P", "GLN": "Q", "ARG": "R", "SER": "S",
+    "THR": "T", "VAL": "V", "TRP": "W", "TYR": "Y",
+}
+
+
+def read_model_one(path):
+    atoms = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("ENDMDL"):
+            break
+        if line.startswith(("ATOM", "HETATM")):
+            atoms.append({
+                "name": line[12:16].strip(),
+                "res": line[17:20].strip(),
+                "chain": line[21],
+                "resi": int(line[22:26]),
+                "xyz": (float(line[30:38]), float(line[38:46]), float(line[46:54])),
+                "el": line[76:78].strip() or line[12:14].strip(),
+            })
+    return atoms
+
+
+def check_structure(name, chain, positions):
+    atoms = read_model_one(here / "structures" / f"{name}.pdb")
+    letters = {}
+    for a in atoms:
+        if a["chain"] == chain and a["name"] == "CA" and a["res"] in three:
+            letters[a["resi"]] = three[a["res"]]
+    region = "start" if name == "1jm7" else "end"
+    scored = [p for p in positions.values() if p["region"] == region]
+    present = [p["p"] for p in scored if p["p"] in letters]
+    match = [p for p in present if letters[p] == positions[p]["wt"]]
+    missing = [p["p"] for p in scored if p["p"] not in letters]
+    zinc = []
+    if name == "1jm7":
+        zn = [a for a in atoms if a["res"] == "ZN" and a["chain"] == chain]
+        for a in atoms:
+            if a["chain"] != chain:
+                continue
+            if (a["res"] == "CYS" and a["name"] == "SG") or (a["res"] == "HIS" and a["name"] in ("ND1", "NE2")):
+                for z in zn:
+                    d = sum((u - v) ** 2 for u, v in zip(a["xyz"], z["xyz"])) ** 0.5
+                    if d <= 2.6:
+                        zinc.append({"resi": a["resi"], "res": a["res"], "atom": a["name"],
+                                     "zn": z["resi"], "dist": round(d, 2)})
+    return {
+        "id": name.upper(),
+        "chain": chain,
+        "n_scored": len(scored),
+        "n_with_coords": len(present),
+        "n_letter_match": len(match),
+        "first": min(letters),
+        "last": max(letters),
+        "missing": missing,
+        "zinc": zinc,
+        "passed": len(present) > 0 and len(match) == len(present),
+    }
+
+
 def main():
     config = json.loads((app_dir / "app_config.json").read_text(encoding="utf-8"))
     consts = read_config_constants()
@@ -130,7 +191,17 @@ def main():
             "guess": row["guess_why"],
         })
 
+    structures = {
+        "start": check_structure("1jm7", "A", positions),
+        "end": check_structure("1t15", "A", positions),
+    }
+    assumed = [24, 27, 39, 41, 44, 47, 61, 64]
+    derived = sorted({z["resi"] for z in structures["start"]["zinc"]})
+    structures["start"]["zinc_positions"] = derived
+    structures["start"]["zinc_matches_assumed"] = derived == assumed
+
     data = {
+        "structures": structures,
         "config": {
             "cutoff_a": config["cutoff_a"],
             "cutoff_b": config.get("cutoff_b"),
@@ -176,6 +247,17 @@ def main():
     print(f"positions={len(positions)} swaps={n_swaps} lab_tested={n_lab} "
           f"esm_vs_app_mismatch={mismatch} entropy_missing={sum(1 for p in positions.values() if p['entropy'] is None)}")
     ok = ok and mismatch == 0
+
+    for key, s in structures.items():
+        print(f"{s['id']} chain {s['chain']}: residues {s['first']}-{s['last']}, "
+              f"scored {s['n_scored']}, with coords {s['n_with_coords']}, "
+              f"letter match {s['n_letter_match']} of {s['n_with_coords']} -> {'PASS' if s['passed'] else 'FAIL'}")
+        print(f"  scored positions without coords: {s['missing']}")
+        ok = ok and s["passed"]
+    for z in structures["start"]["zinc"]:
+        print(f"  zinc ligand: {z['res']}{z['resi']} {z['atom']} to ZN {z['zn']} at {z['dist']} A")
+    print(f"zinc positions from file: {derived}; assumed: {assumed}; "
+          f"{'same' if derived == assumed else 'DIFFERENT'}")
     if not ok:
         sys.exit(1)
 

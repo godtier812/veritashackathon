@@ -33,3 +33,11 @@ PyTorch, Hugging Face Transformers, NumPy, pandas, SciPy, scikit-learn, Biopytho
 ## The organisers
 
 Veritas AI hackathon project briefs, Hacker Guide, and sample submission.
+
+## Explorer (`explorer/`)
+
+The explorer is a static page that reads only `explorer/data.json`, built by `explorer/build_data.py` from `app/app_data.csv`, `app/app_config.json`, `outputs/esm_scores.csv` and `outputs/results/`. Its 3D structures are shown for orientation only; the model saw sequence alone.
+
+- 3Dmol.js 2.4.2 (vendored as `explorer/vendor/3Dmol-min.js`, from cdnjs), BSD-3-Clause licence, copyright University of Pittsburgh and contributors; licence text in `explorer/vendor/3Dmol-LICENSE.txt`. Rego N, Koes D (2015), "3Dmol.js: molecular visualization with WebGL", *Bioinformatics* 31:1322–1324. https://3dmol.csb.pitt.edu
+- RCSB PDB entry `1JM7`, solution NMR structure of the BRCA1/BARD1 RING-domain heterodimer (14 models; BRCA1 is chain A). Brzovic PS, Rajagopal P, Hoyt DW, King MC, Klevit RE (2001), "Structure of a BRCA1-BARD1 heterodimeric RING-RING complex", *Nat. Struct. Biol.* 8:833–837. https://doi.org/10.1038/nsb1001-833 · https://www.rcsb.org/structure/1JM7
+- RCSB PDB entry `1T15`, X-ray structure (1.85 Å) of the BRCA1 BRCT domains with a phosphorylated BACH1 peptide (BRCA1 is chain A, peptide is chain B). Clapperton JA, Manke IA, Lowery DM, Ho T, Haire LF, Yaffe MB, Smerdon SJ (2004), "Structure and mechanism of BRCA1 BRCT domain recognition of phosphorylated BACH1 with implications for cancer", *Nat. Struct. Mol. Biol.* 11:512–518. https://doi.org/10.1038/nsmb775 · https://www.rcsb.org/structure/1T15

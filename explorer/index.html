@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BRCA Spellcheck Explorer</title>
+<meta name="description" content="Explore how a protein language model's calls on BRCA1 swaps compare with lab results. A prototype, not medical advice.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="mark" aria-hidden="true">B</span><span>BRCA Spellcheck</span><span class="sub">explorer</span></div>
+    <div class="seg" role="group" aria-label="Region">
+      <button type="button" data-region="start" class="on">Start region <span class="hint">1–101</span></button>
+      <button type="button" data-region="end">End region <span class="hint">1631–1855</span></button>
+    </div>
+    <div class="seg" role="group" aria-label="Colour by">
+      <button type="button" data-mode="model" class="on">Model score</button>
+      <button type="button" data-mode="lab">Lab result</button>
+      <button type="button" data-mode="disagree">Where they disagree</button>
+    </div>
+    <div class="actions">
+      <button type="button" class="ghost" id="open-score">Scoreboard</button>
+      <button type="button" class="ghost" id="open-about">About</button>
+      <a class="ghost" id="tool-link" href="#">Open the simple tool</a>
+    </div>
+  </header>
+
+  <aside class="panel left" aria-label="Find a mutation">
+    <h2>Find a mutation</h2>
+    <form id="search-form" autocomplete="off">
+      <input id="search" type="text" spellcheck="false" placeholder="C61G, c61g or p.Cys61Gly" aria-label="Mutation">
+    </form>
+    <p id="search-msg" class="msg" role="status"></p>
+    <div class="chips" role="group" aria-label="Filter">
+      <button type="button" data-filter="all" class="on">All</button>
+      <button type="button" data-filter="agree">Model and lab agree</button>
+      <button type="button" data-filter="miss">Missed</button>
+      <button type="button" data-filter="alarm">False alarms</button>
+      <button type="button" data-filter="cant">Can't tell</button>
+    </div>
+    <p class="count" id="list-count"></p>
+    <ul id="list" class="list"></ul>
+  </aside>
+
+  <main class="stage" aria-label="BRCA1 structure">
+    <div id="viewer"></div>
+    <div id="fallback" hidden><canvas id="ribbon"></canvas></div>
+    <div class="stage-head">
+      <p class="pdb" id="pdb-caption"></p>
+      <p class="orient">Structure shown for orientation only. The model saw sequence alone.</p>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="stage-foot">
+      <p id="stage-note"></p>
+      <div id="flex" class="flex" hidden>
+        <button type="button" id="flex-btn" class="ghost small">Cycle conformers</button>
+        <span id="flex-label"></span>
+      </div>
+    </div>
+    <div id="tip" class="tip" hidden></div>
+  </main>
+
+  <aside class="panel right" aria-label="Readout" id="readout"></aside>
+
+  <section class="scrub" aria-label="Position scrubber">
+    <div class="scrub-side">
+      <button type="button" id="play" class="ghost small" aria-label="Play sweep">Play</button>
+      <span class="rowlab">Model</span><span class="rowlab">Lab</span><span class="rowlab">Agree</span>
+    </div>
+    <div class="scrub-track"><canvas id="track" tabindex="0" aria-label="Scored positions. Use arrow keys to move."></canvas></div>
+  </section>
+
+  <footer class="disclaimer">This project is a prototype and is not medical advice.</footer>
+</div>
+
+<div class="overlay" id="score" hidden role="dialog" aria-modal="true" aria-labelledby="score-title">
+  <div class="sheet">
+    <button type="button" class="close ghost small" data-close>Close</button>
+    <div id="score-body"></div>
+  </div>
+</div>
+
+<div class="overlay" id="about" hidden role="dialog" aria-modal="true" aria-labelledby="about-title">
+  <div class="sheet">
+    <button type="button" class="close ghost small" data-close>Close</button>
+    <div id="about-body"></div>
+  </div>
+</div>
+
+<div id="intro" hidden>
+  <div class="intro-seq" id="intro-seq"></div>
+  <p class="intro-cap" id="intro-cap"></p>
+  <p class="intro-skip">Click or press any key to skip</p>
+</div>
+
+<script src="vendor/3Dmol-min.js"></script>
+<script src="verdict.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
