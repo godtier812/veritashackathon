@@ -1,0 +1,33 @@
+{
+  "what": "EXPLORATORY arm 6, added after the one test run: an equal-weight ensemble of ideas used by models above ESM-2 on ProteinGym. Version and cutoff chosen on the start region only. Nothing here changes outputs/frozen.json.",
+  "created_at": "2026-11-15T21:49:00-06:00",
+  "seed": 42,
+  "tuning_region": "start",
+  "test_region": "end",
+  "selection_rule": "highest start-region AUROC (LOF vs FUNC, 516 rows); a tie goes to the simpler version",
+  "candidates_start_auroc": {
+    "plm": 0.8566075146227818,
+    "plm_structure": 0.8482006543075246,
+    "plm_structure_blosum": 0.8700703876276396
+  },
+  "arm2_start_auroc_in_sample": 0.8218499058193715,
+  "chosen": "plm_structure_blosum",
+  "chosen_name": "the ESM-2 and ESM-C scores plus AlphaFold burial and BLOSUM62, equally weighted",
+  "parts": [
+    "z_esm2",
+    "z_esmc",
+    "z_burial",
+    "z_blosum"
+  ],
+  "cutoff_rule": "highest cutoff catching at least 90% of start-region harmful rows",
+  "cutoff": -0.6125565,
+  "tuning_caught": 118,
+  "tuning_false_alarms": 166,
+  "inputs": {
+    "arm6_features_sha256": "d3e7682e05cd4da3d7388f66f1ba8f44cb05ccfad9bb6d6dff991bc80018f520",
+    "structure_sha256": "b2af213e2ef20f95c349a2159d628321205ad55b64511dd9e891b8a652d8a1a4",
+    "arm4_scores_sha256": "9c05cdd6fde74e83fe1d4c922a22640adf9c601a4d1f8c4b1359b497dd0880ec",
+    "esm_scores_sha256": "894e96ecd244dba588de35b32a0899b78ee2968a7273c63a99e1b6c58e2d17a8",
+    "frozen_sha256": "3d0eee5fea4f76d37740dc1d51f829caf5c97e079a45defa6365cf2de8530f40"
+  }
+}

@@ -1610,3 +1610,39 @@ def test_arm5_accuracy_bootstrap_and_log(tmp_path: Path) -> None:
     log = tmp_path / "log.txt"
     log.write_text("t | run=1 | status=started | x\nt | run=1 | status=success | x\n", encoding="utf-8")
     assert arm5.log_statuses(log) == ["started", "success"]
+
+
+def test_arm6_structure_and_burial():
+    """Arm 6 reads CB (CA for Gly) and buried residues get a higher burial score."""
+    from src import arm6
+
+    def atom(n, name, res, pos, x, y, z, b):
+        return f"ATOM  {n:5d} {name:<4} {res} A{pos:4d}    {x:8.3f}{y:8.3f}{z:8.3f}  1.00{b:6.2f}           C"
+
+    text = "\n".join([
+        atom(1, "CA", "GLY", 1, 0, 0, 0, 90), atom(2, "CA", "ALA", 2, 4, 0, 0, 90),
+        atom(3, "CB", "ALA", 2, 5, 0, 0, 90), atom(4, "CA", "LEU", 3, 30, 0, 0, 50),
+        atom(5, "CB", "LEU", 3, 31, 0, 0, 50),
+    ])
+    s = arm6.read_structure(text)
+    assert list(s["letter"]) == ["G", "A", "L"]
+    assert s.loc[1, "x"] == 5.0  # CB used for Ala
+    b = arm6.burial_score(s)
+    assert b[3] < b[1] and b[3] < b[2]
+
+
+def test_arm6_pure_rules():
+    """Z-scores, equal-weight candidates and the tie rule behave as documented."""
+    from src import arm6
+
+    z = arm6.zscore(np.array([1.0, 2.0, 3.0]))
+    assert abs(z.mean()) < 1e-12 and abs(z.std() - 1) < 1e-12
+    with pytest.raises(ValueError):
+        arm6.zscore(np.array([2.0, 2.0]))
+    f = pd.DataFrame({"z_esm2": [1.0, 0.0], "z_esmc": [3.0, 0.0], "z_burial": [2.0, 3.0], "z_blosum": [0.0, 1.0]})
+    assert np.allclose(arm6.candidate_harm(f, "plm"), [2.0, 0.0])
+    assert np.allclose(arm6.candidate_harm(f, "plm_structure"), [2.0, 1.0])
+    assert np.allclose(arm6.candidate_harm(f, "plm_structure_blosum"), [1.5, 1.0])
+    tie = {"plm": 0.8, "plm_structure": 0.8, "plm_structure_blosum": 0.7}
+    assert arm6.choose_candidate(tie) == "plm"
+    assert arm6.choose_candidate({**tie, "plm_structure_blosum": 0.9}) == "plm_structure_blosum"

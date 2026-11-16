@@ -223,6 +223,26 @@ ARM5_RUN_LOG_PATH: Path = RESULTS_DIR / "arm5_run_log.txt"
 ARM5_RESULT_PATH: Path = RESULTS_DIR / "arm5.json"
 ARM5_PARAGRAPH_PATH: Path = RESULTS_DIR / "arm5_paragraph.md"
 
+# Exploratory arm 6 (human decision, added after the one test run): an ensemble built from
+# ideas used by the models above ESM-2 on ProteinGym's BRCA1 row. No labels build any part;
+# the version and cutoff are chosen on the start region and frozen before one run.
+ARM6_STRUCTURE_PATH: Path = REFERENCE_DIR / "AF-P38398-F1-model_v6.pdb"
+ARM6_STRUCTURE_SHA256: str = (
+    "b2af213e2ef20f95c349a2159d628321205ad55b64511dd9e891b8a652d8a1a4"
+)
+ARM6_STRUCTURE_URL: str = "https://alphafold.ebi.ac.uk/files/AF-P38398-F1-model_v6.pdb"
+ARM6_CANDIDATES: tuple[str, ...] = ("plm", "plm_structure", "plm_structure_blosum")
+ARM6_CANDIDATE_NAMES: dict[str, str] = {
+    "plm": "the mean of the standardised ESM-2 650M and ESM-C 600M scores",
+    "plm_structure": "the ESM-2 and ESM-C scores plus AlphaFold burial, equally weighted",
+    "plm_structure_blosum": "the ESM-2 and ESM-C scores plus AlphaFold burial and BLOSUM62, equally weighted",
+}
+ARM6_FEATURES_PATH: Path = OUTPUTS_DIR / "arm6_features.csv"
+ARM6_FROZEN_PATH: Path = OUTPUTS_DIR / "frozen_arm6.json"
+ARM6_RUN_LOG_PATH: Path = RESULTS_DIR / "arm6_run_log.txt"
+ARM6_RESULT_PATH: Path = RESULTS_DIR / "arm6.json"
+ARM6_PARAGRAPH_PATH: Path = RESULTS_DIR / "arm6_paragraph.md"
+
 # 7.13 Fixed text
 DISCLAIMER: str = "This project is a prototype and is not medical advice."
 DEMO_NOTE: str = (
