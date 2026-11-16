@@ -1,0 +1,32 @@
+{
+  "what": "EXPLORATORY arm 6 on the held-out end region, run once after the headline test run. Same 1,166 rows as the headline. Not a replacement for arm 2.",
+  "chosen": "plm_structure_blosum",
+  "chosen_name": "the ESM-2 and ESM-C scores plus AlphaFold burial and BLOSUM62, equally weighted",
+  "cutoff": -0.6125565,
+  "end": {
+    "n_harmful": 267,
+    "n_harmless": 899,
+    "harmful_caught": 256,
+    "harmful_missed": 11,
+    "false_alarms": 497,
+    "harmless_cleared": 402,
+    "catch_rate_percent": 95.9,
+    "false_alarm_rate_percent": 55.3,
+    "accuracy_percent": 56.4,
+    "auroc": 0.8962,
+    "auroc_arm2_same_rows": 0.8995
+  },
+  "arm6_minus_arm2": {
+    "point": -0.0032995463123821622,
+    "low": -0.016039703889282414,
+    "high": 0.01090610708355194,
+    "n_positions": 225,
+    "n_resamples_used": 1000,
+    "n_resamples_skipped_one_class": 0
+  },
+  "int_rows_end": {
+    "n_int": 96,
+    "flagged": 77
+  },
+  "sentence": "No detectable difference from `arm2` at this sample size."
+}
