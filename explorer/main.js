@@ -1,5 +1,5 @@
 (function () {
-  var toolurl = "";
+  var toolurl = /\/explorer\/?$/.test(location.pathname) ? "../" : "";
   var order = "ACDEFGHIKLMNPQRSTVWY";
   var names = {
     A: "alanine", C: "cysteine", D: "aspartate", E: "glutamate", F: "phenylalanine", G: "glycine",
@@ -117,6 +117,8 @@
     opts = opts || {};
     state.sel = item;
     state.auto = !!opts.auto;
+    if (toolurl) $("#tool-link").href = toolurl + "?q=" + encodeURIComponent(item.name);
+    try { history.replaceState(null, "", location.pathname + "?m=" + encodeURIComponent(item.name)); } catch (err) {}
     var r = regionof(item.p);
     if (r !== state.region) setregion(r, true);
     renderreadout(opts);
@@ -280,6 +282,18 @@
     if (!state.sel) return;
     var b = document.querySelector('.list button[data-k="' + state.sel.name + '"]');
     if (b) { b.classList.add("sel"); if (!noscroll) b.scrollIntoView({ block: "nearest" }); }
+  }
+
+  function deeplink() {
+    var m = new URLSearchParams(location.search).get("m");
+    if (!m) return null;
+    $("#search").value = m.slice(0, 40);
+    var before = state.sel;
+    var r = rules.parse(m, cfg.protein_length);
+    if (r.error) { $("#search-msg").textContent = r.error; return null; }
+    var e = bypos[r.p];
+    if (!e || e.wt !== r.wt) { search(m); state.sel = before; return null; }
+    return swapat(r.p, r.nw);
   }
 
   function search(text) {
@@ -771,16 +785,19 @@
       setuptrack();
       setupviewer();
       renderlist();
-      var c61g = swapat(61, "G");
-      state.sel = c61g;
+      var target = swapat(61, "G");
+      var asked = deeplink();
+      if (asked) target = asked;
+      state.sel = target;
+      state.region = regionof(target.p);
+      document.querySelectorAll("[data-region]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-region") === state.region); });
       captions();
       renderreadout({});
       drawtrack();
-      var first = fallback ? Promise.resolve() : loadstructure("start");
+      var first = fallback ? Promise.resolve() : loadstructure(state.region);
       if (fallback) drawribbon();
-      intro(function () {
-        first.then(function () { select(c61g, { fromlist: true }); startspin(); });
-      });
+      var go = function () { first.then(function () { select(target, { fromlist: !asked }); startspin(); }); };
+      if (asked || new URLSearchParams(location.search).get("m")) go(); else intro(go);
     }).catch(function (err) {
       $("#readout").innerHTML = "<p>Could not load data.json. Open this page through a local web server.</p>";
     });

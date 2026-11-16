@@ -362,6 +362,7 @@ def check_mutation(text: str) -> str:
 lof_below: float = -1.328
 func_above: float = -0.748
 na: str = "not available"
+explorer_url: str = ""
 results_dir: Path = APP_DIR / "results"
 repo_results_dir: Path = APP_DIR.parent / "outputs" / "results"
 bundle_names: list[str] = [
@@ -893,7 +894,18 @@ def result_html(info: dict) -> str:
         f'<p class="story">{story}</p>'
         f'{gauge(info["esm_score"], lab_class, lab_score, info["mutant"])}'
         f"{numbers_panel(info, agree)}"
+        f"{explorer_link(info['mutant'])}"
         "</article>"
+    )
+
+
+def explorer_link(mutant: str) -> str:
+    if not explorer_url:
+        return ""
+    return (
+        f'<a class="to-3d" href="{esc(explorer_url)}?m={esc(mutant)}" target="_blank" rel="noopener">'
+        f"Open {esc(mutant)} in 3D</a>"
+        '<p class="to-3d-note">See this swap on the BRCA1 structure, with every other letter the model scored at this position.</p>'
     )
 
 
