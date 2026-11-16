@@ -483,7 +483,7 @@ def build(demo_url, explorer_url=""):
     }
     for k, v in swaps.items():
         html = html.replace(k, v)
-    heat = root / "landing_parked" / "heatmap.png"
+    heat = root / "outputs" / "heatmap.png"
     if heat.exists():
         shutil.copyfile(heat, here / "heatmap.png")
         html = html.replace("{{heat}}", (

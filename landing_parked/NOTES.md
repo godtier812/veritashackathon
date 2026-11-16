@@ -1,5 +1,18 @@
 # Parked landing-page parts
 
+**The three parked files were removed from the tree on 2026-11-15 to tidy the repository.** They were never deployed and nothing used them. This note is kept as a map of what they held. To get one back, restore it from git history:
+
+```
+git show 4fe0ff5:landing_parked/app_landing.py > app_landing.py
+git show 4fe0ff5:landing_parked/style_landing.css > style_landing.css
+```
+
+`heatmap.png` was a byte copy of `outputs/heatmap.png`; `landing/build.py` now reads `outputs/heatmap.png` directly.
+
+The original description follows.
+
+---
+
 These parts came out of `app/` when the demo became a plain tool. Nothing here is deployed, and nothing in `app/` points here. They are kept so a later landing page can reuse them.
 
 ## Files
