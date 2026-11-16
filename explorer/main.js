@@ -287,7 +287,7 @@
     var r = rules.parse(text, cfg.protein_length);
     if (r.error) { msg.textContent = r.error; return; }
     var e = bypos[r.p];
-    if (!e) { msg.textContent = "Position " + r.p + " is not one of the 326 lab-tested positions (1 to 101 and 1631 to 1855). This demo only answers where its answers can be checked against the lab, so it will not guess here."; return; }
+    if (!e) { msg.textContent = "Position " + r.p + " is not one of the " + cfg.n_tested_positions + " lab-tested positions (1 to 101 and 1631 to 1855). This demo only answers where its answers can be checked against the lab, so it will not guess here."; return; }
     if (inregion(r.p, "end") && !cfg.end_labels_included) { msg.textContent = "End-region answers (positions 1631 to 1855) are hidden until the one test run is done."; return; }
     if (e.wt !== r.wt) {
       msg.textContent = e.wt === r.nw ? "BRCA1 has " + e.wt + " at position " + r.p + ", not " + r.wt + "."
@@ -623,7 +623,7 @@
 
   function arm(a) {
     var au = data.auroc[a.arm];
-    var h = '<div class="arm"><div class="name">' + esc(a.name) + "<span>AUROC " + (au === undefined ? na : au.toFixed(3)) + (a.cutoff === null ? "" : " · cutoff " + a.cutoff.toFixed(2)) + "</span></div>";
+    var h = '<div class="arm"><div class="name">' + esc(a.name) + "<span>AUROC " + (au === undefined ? na : au.toFixed(4)) + (a.cutoff === null ? "" : " · cutoff " + a.cutoff.toFixed(2)) + "</span></div>";
     h += '<div><div class="sbar"><i style="width:' + (a.caught / a.n_harmful * 100) + '%;background:var(--agree)"></i><i style="width:' + (a.missed / a.n_harmful * 100) + '%;background:var(--hatch)"></i></div>';
     h += '<div class="slab"><span>caught <b data-c="' + a.caught + '">0</b></span><span>missed <b data-c="' + a.missed + '">0</b></span><span>of ' + a.n_harmful + " harmful</span></div></div>";
     h += '<div><div class="sbar"><i style="width:' + (a.false_alarms / a.n_harmless * 100) + '%;background:var(--hatch)"></i><i style="width:' + (a.cleared / a.n_harmless * 100) + '%;background:var(--agree)"></i></div>';
@@ -659,8 +659,8 @@
   function renderabout() {
     var s = data.structures;
     var h = '<h2 id="about-title">BRCA1 is our exam, not the use case</h2>';
-    h += "<p>The real use is a gene where nobody has tested a swap yet. We picked BRCA1 because a lab tested almost every single-letter swap in two of its regions, so every call the model makes here can be graded against the lab's answer.</p>";
-    h += "<p>BRCA1 is a tumour-suppressor protein. A swap marked harmful lost function in a cell-based lab test. That is not a patient diagnosis.</p>";
+    h += "<p>The real use is a gene where nobody has tested a swap yet. We picked BRCA1 because a lab tested almost every single-letter DNA change in two of its regions, so the model's calls on the protein changes those edits make can be graded against the lab's answer.</p>";
+    h += "<p>BRCA1 is a tumour-suppressor protein. A swap marked harmful lost function in a cell-based lab test. That is not a patient diagnosis. The model's “Looks harmful” is a prediction of that lab result.</p>";
     h += "<h3>How it works</h3><ol class=steps>";
     h += "<li>A protein language model (" + esc(cfg.model_id || na) + ") reads BRCA1's letters. It never saw the lab results.</li>";
     h += "<li>At each position we hide the normal letter and ask the model how likely each letter is. A swap's score is log P(new letter) − log P(normal letter).</li>";
