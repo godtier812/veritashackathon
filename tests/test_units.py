@@ -1577,3 +1577,36 @@ def test_arm4_evaluate_refuses_changed_scores(
     monkeypatch.setattr(load, "test_run_done", lambda *_a, **_k: True)
     assert arm4.main(["evaluate"]) == 1
     assert not config.ARM4_RUN_LOG_PATH.exists()
+
+
+# --- Exploratory arm 5 (src/arm5.py) ---
+
+
+def test_arm5_balanced_cutoff_and_sentence() -> None:
+    from src import arm5
+
+    harm = np.array([5.0, 4.0, 3.0, 2.0, 1.0, 0.0])
+    y = np.array([1, 1, 0, 1, 0, 0])
+    assert arm5.choose_balanced_cutoff(harm, y) == 4.0
+    assert arm5.choose_balanced_cutoff(np.array([2.0, 1.0]), np.array([1, 0])) == 2.0
+    with pytest.raises(ValueError):
+        arm5.choose_balanced_cutoff(np.array([1.0, 2.0]), np.array([1, 1]))
+    assert arm5.choose_sentence({"low": 0.5, "high": 2.0}) == arm5.SENTENCE_BETTER
+    assert arm5.choose_sentence({"low": -2.0, "high": -0.1}) == arm5.SENTENCE_WORSE
+    assert arm5.choose_sentence({"low": -1.0, "high": 1.0}) == arm5.SENTENCE_NO_DIFFERENCE
+
+
+def test_arm5_accuracy_bootstrap_and_log(tmp_path: Path) -> None:
+    from src import arm5
+
+    positions = np.array([1, 1, 2, 2, 3, 3])
+    a = np.array([True, True, True, True, False, True])
+    b = np.array([True, False, True, False, False, True])
+    out = arm5.accuracy_bootstrap(positions, a, b, 200, 0)
+    assert abs(out["point"] - 100.0 * (5 / 6 - 3 / 6)) < 1e-9
+    assert out["low"] <= out["point"] <= out["high"]
+    assert out["n_positions"] == 3
+    assert arm5.log_statuses(tmp_path / "missing.txt") == []
+    log = tmp_path / "log.txt"
+    log.write_text("t | run=1 | status=started | x\nt | run=1 | status=success | x\n", encoding="utf-8")
+    assert arm5.log_statuses(log) == ["started", "success"]

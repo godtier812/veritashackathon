@@ -213,6 +213,16 @@ ARM4_RUN_LOG_PATH: Path = RESULTS_DIR / "arm4_run_log.txt"
 ARM4_RESULT_PATH: Path = RESULTS_DIR / "arm4.json"
 ARM4_PARAGRAPH_PATH: Path = RESULTS_DIR / "arm4_paragraph.md"
 
+# Exploratory arm 5 (human decision, added after the one test run). Same ESM-2 scores as
+# arm 2; only the cutoff rule changes, chosen on the start region and frozen before one run.
+ARM5_CUTOFF_RULE: str = (
+    "highest start-region catch rate minus false-alarm rate; a tie goes to the higher cutoff"
+)
+ARM5_FROZEN_PATH: Path = OUTPUTS_DIR / "frozen_arm5.json"
+ARM5_RUN_LOG_PATH: Path = RESULTS_DIR / "arm5_run_log.txt"
+ARM5_RESULT_PATH: Path = RESULTS_DIR / "arm5.json"
+ARM5_PARAGRAPH_PATH: Path = RESULTS_DIR / "arm5_paragraph.md"
+
 # 7.13 Fixed text
 DISCLAIMER: str = "This project is a prototype and is not medical advice."
 DEMO_NOTE: str = (

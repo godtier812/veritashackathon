@@ -1,0 +1,37 @@
+{
+  "what": "EXPLORATORY arm 5, added after the one test run. Same ESM-2 scores as arm 2; only the cutoff rule differs, chosen on the start region only. Nothing here changes outputs/frozen.json.",
+  "created_at": "2026-11-15T21:06:17-06:00",
+  "seed": 42,
+  "tuning_region": "start",
+  "test_region": "end",
+  "scores": "ESM-2 650M zero-shot (the arm 2 scores, outputs/esm_scores.csv)",
+  "cutoff_rule": "highest start-region catch rate minus false-alarm rate; a tie goes to the higher cutoff",
+  "cutoff": 6.958152,
+  "tuning": {
+    "n_harmful": 131,
+    "n_harmless": 385,
+    "harmful_caught": 86,
+    "harmful_missed": 45,
+    "false_alarms": 50,
+    "harmless_cleared": 335,
+    "catch_rate_percent": 65.6,
+    "false_alarm_rate_percent": 13.0,
+    "accuracy_percent": 81.6
+  },
+  "arm2_cutoff_same_rows": 3.034498,
+  "arm2_tuning_same_rows": {
+    "n_harmful": 131,
+    "n_harmless": 385,
+    "harmful_caught": 118,
+    "harmful_missed": 13,
+    "false_alarms": 196,
+    "harmless_cleared": 189,
+    "catch_rate_percent": 90.1,
+    "false_alarm_rate_percent": 50.9,
+    "accuracy_percent": 59.5
+  },
+  "inputs": {
+    "esm_scores_sha256": "894e96ecd244dba588de35b32a0899b78ee2968a7273c63a99e1b6c58e2d17a8",
+    "frozen_sha256": "3d0eee5fea4f76d37740dc1d51f829caf5c97e079a45defa6365cf2de8530f40"
+  }
+}
