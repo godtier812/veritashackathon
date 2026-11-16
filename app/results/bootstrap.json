@@ -1,0 +1,18 @@
+{
+  "unit": "end-region positions",
+  "n_positions": 225,
+  "n_resamples_requested": 1000,
+  "n_resamples_used": 1000,
+  "n_resamples_skipped_one_class": 0,
+  "seed": 42,
+  "esm_minus_blosum": {
+    "point": 0.23141193085950695,
+    "low": 0.18846879906839403,
+    "high": 0.27195274943182196
+  },
+  "arm3_minus_esm": {
+    "point": -0.03333708281777914,
+    "low": -0.053522604963106055,
+    "high": -0.014392421079042417
+  }
+}

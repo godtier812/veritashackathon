@@ -1,0 +1,5 @@
+region_tested,arm,n_harmful,n_harmless,auroc
+end,arm0,267,899,0.5
+end,arm1,267,899,0.6681
+end,arm2,267,899,0.8995
+end,arm3,267,899,0.8662

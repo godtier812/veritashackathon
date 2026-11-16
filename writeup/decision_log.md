@@ -104,3 +104,22 @@
 - **Locked-rules reference and eleven judge Q&As (`writeup/qa_sheet.md`):** Documented all 15 Section 3 locked rules in a four-column table (`Rule | What the rule locks | Why we locked it | Judge question it answers`), answered all ten Section 12.8 judge questions plus Question 11 on why Arm 3 ranked below zero-shot ESM-2 (with the `-0.054` to `-0.014` bootstrap interval and `"Guess:"`-prefixed causal hypotheses), recorded the deferred live-quiz status, and verified `CLEAN` via `rule-auditor`.
 
 
+
+## Demo Polish — Design Decisions
+
+Ideas taken from the ui-ux-pro-max-skill README and 21st.dev, rebuilt by hand in CSS (no code or components copied):
+
+- **Semantic colour tokens:** Every colour is a named role on `:root` (`--harmful`, `--harmless`, `--cant`, `--untested`, `--agree`, `--disagree`, plus surface and ink roles), never a raw value in a rule, so the six result states stay consistent across the card, gauge, legend and scoreboard.
+- **Meaning never by colour alone:** Each state also has its own outline SVG shape (triangle, circle, diamond, dashed circle, check, cross) and a text label; mistakes (misses and false alarms) use a calm slate, not alarm red.
+- **Contrast floor of 4.5:1:** All text tokens were checked against the background and card surface (lowest is 4.77:1 for the input placeholder) instead of trusting the palette by eye.
+- **Avoid the generic AI look:** No purple or pink gradients, no emoji as icons, no glass cards; a serif display face (Instrument Serif) with IBM Plex Sans body and JetBrains Mono tabular numbers, 1 px rules instead of heavy shadows, and one light theme.
+- **Check the breakpoints, respect motion settings:** Layouts were screenshotted at 390, 768 and 1440 px with no sideways scroll, every animation uses transform or opacity with one easing curve, and all motion switches off under `prefers-reduced-motion`.
+
+
+## Demo Tool — Simplification
+
+- **The demo is a tool, not a landing page:** `app/` now has one 720 px column with a header line, the input, example chips, the result card and a Scoreboard tab. The hero, stat chips, How it works, Limits and credits, the heat map, Surprise me, the copy button and all animation code moved to `landing_parked/` (outside `app/`, so it is not deployed). Only hover and focus changes remain, at 150 ms.
+- **One typeface family plus mono:** The serif display face was dropped. IBM Plex Sans for text, JetBrains Mono for values.
+- **Scoreboard as a plain table:** Caught, missed, false alarms and catch rate per arm in one table read from `headline.csv`, with the S6 sentence, the AUROC table and the worst miss with its guess labelled as a guess.
+- **One signature moment, the spellcheck strip:** Each result shows BRCA1's real letters around the position (from `app_data.csv`). The old letter is struck through and lifted, the new letter drops in, and a spellcheck-style underline draws under it: a red wave for "Looks harmful", a green line for "Looks harmless", an amber dotted line for "Can't tell". Then the gauge markers slide to their scores. The motion answers the user's action, and everything shows its final state at once under reduced motion. The empty state shows the strip for positions 55–67 and explains that each letter is one amino acid.
+- **Cool paper palette, no all-caps labels:** Moved from warm cream to a cool off-white with ink blue, dropped uppercase eyebrow labels and dot-joined meta strings, and made the S6 sentence the scoreboard headline with small bars that grow when the tab opens.

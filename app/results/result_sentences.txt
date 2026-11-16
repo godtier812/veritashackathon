@@ -1,0 +1,3 @@
+S1: A model that only read protein sequences ranked harmful BRCA1 mutations better than a classic substitution table.
+S3: We could not detect a benefit from adding labels from the other end of the protein.
+S6: To catch 94.4% of harmful mutations, the model also flagged 437 of 899 harmless ones.
