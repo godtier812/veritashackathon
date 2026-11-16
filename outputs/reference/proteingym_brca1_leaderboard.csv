@@ -1,0 +1,98 @@
+model,spearman,auc
+Site-Independent,0.501,0.824
+EVmutation,0.385,0.756
+DeepSequence (single),0.441,0.788
+DeepSequence (ensemble),0.432,0.774
+EVE (single),0.424,0.776
+EVE (ensemble),0.466,0.8
+Unirep,0.125,0.566
+Unirep evotuned,0.189,0.683
+MSA Transformer (single),0.387,0.76
+MSA Transformer (ensemble),0.407,0.772
+ESM-1b,0.494,0.836
+ESM-1v (single),0.404,0.775
+ESM-1v (ensemble),0.447,0.805
+ESM2 (8M),0.134,0.582
+ESM2 (35M),0.392,0.767
+ESM2 (150M),0.455,0.823
+ESM2 (650M),0.515,0.86
+ESM2 (3B),0.497,0.845
+ESM2 (15B),0.394,0.788
+Wavenet,0.296,0.699
+RITA S,0.145,0.577
+RITA M,0.379,0.762
+RITA L,0.405,0.778
+RITA XL,0.361,0.774
+Progen2 S,0.305,0.705
+Progen2 M,0.473,0.82
+Progen2 Base,0.457,0.814
+Progen2 L,0.442,0.801
+Progen2 XL,0.423,0.815
+GEMME,0.438,0.776
+VESPA,0.539,0.86
+VESPAl,0.482,0.832
+VespaG,0.523,0.869
+ProtGPT2,0.22,0.658
+Tranception S no retrieval,0.151,0.603
+Tranception M no retrieval,0.179,0.621
+Tranception L no retrieval,0.409,0.79
+Tranception S,0.456,0.792
+Tranception M,0.456,0.792
+Tranception L,0.514,0.846
+TranceptEVE S,0.475,0.806
+TranceptEVE M,0.476,0.806
+TranceptEVE L,0.533,0.855
+CARP (38M),0.229,0.642
+CARP (600K),0.132,0.58
+CARP (640M),0.534,0.865
+CARP (76M),0.457,0.815
+MIF,0.44,0.804
+MIF-ST,0.469,0.809
+ESM-IF1,0.116,0.57
+ProteinMPNN,0.12,0.587
+"ProtSSN (k=10, h=512)",0.515,0.856
+"ProtSSN (k=10, h=768)",0.501,0.85
+"ProtSSN (k=10, h=1280)",0.506,0.86
+"ProtSSN (k=20, h=512)",0.502,0.852
+"ProtSSN (k=20, h=768)",0.512,0.861
+"ProtSSN (k=20, h=1280)",0.504,0.862
+"ProtSSN (k=30, h=512)",0.513,0.858
+"ProtSSN (k=30, h=768)",0.512,0.857
+"ProtSSN (k=30, h=1280)",0.504,0.853
+ProtSSN (ensemble),0.519,0.864
+SaProt (650M),0.539,0.864
+SaProt (35M),0.481,0.832
+PoET (200M),0.558,0.875
+MULAN,0.32,0.714
+ProSST (K=20),0.395,0.763
+ProSST (K=128),0.407,0.779
+ProSST (K=512),0.435,0.792
+ProSST (K=1024),0.467,0.82
+ProSST (K=2048),0.497,0.853
+ProSST (K=4096),0.412,0.782
+ESCOTT,0.507,0.825
+VenusREM,0.543,0.873
+RSALOR,0.454,0.788
+S2F,0.524,0.861
+S2F-MSA,0.551,0.872
+S3F,0.535,0.871
+S3F-MSA,0.56,0.879
+SiteRM,0.512,0.833
+ESM3 open (1.4B),0.462,0.814
+ESM-C (300M),0.51,0.856
+ESM-C (600M),0.541,0.868
+xTrimoPGLM-1B-MLM,0.507,0.846
+xTrimoPGLM-3B-MLM,0.5,0.842
+xTrimoPGLM-10B-MLM,0.519,0.84
+xTrimoPGLM-1B-CLM,0.373,0.785
+xTrimoPGLM-3B-CLM,0.388,0.747
+xTrimoPGLM-7B-CLM,0.021,0.501
+xTrimoPGLM-100B-int4,0.397,0.74
+Progen3 112m,0.145,0.59
+Progen3 219m,0.146,0.599
+Progen3 339m,0.152,0.58
+Progen3 762m,0.329,0.71
+Progen3 1B,0.392,0.776
+Progen3 3B,0.372,0.771
+AIDO Protein-RAG (16B),0.491,0.86
+Protriever,0.524,0.846

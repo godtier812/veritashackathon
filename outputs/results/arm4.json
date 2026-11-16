@@ -1,0 +1,33 @@
+{
+  "what": "EXPLORATORY arm 4 on the held-out end region, run once after the headline test run. Same 1,166 rows as the headline. Not a replacement for arm 2.",
+  "chosen": "esmc",
+  "chosen_name": "ESM-C 600M zero-shot",
+  "model_id": "biohub/ESMC-600M",
+  "cutoff": 3.171966,
+  "end": {
+    "n_harmful": 267,
+    "n_harmless": 899,
+    "harmful_caught": 250,
+    "harmful_missed": 17,
+    "false_alarms": 423,
+    "harmless_cleared": 476,
+    "catch_rate_percent": 93.6,
+    "false_alarm_rate_percent": 47.1,
+    "accuracy_percent": 62.3,
+    "auroc": 0.9024,
+    "auroc_arm2_same_rows": 0.8995
+  },
+  "arm4_minus_arm2": {
+    "point": 0.0029079334924781985,
+    "low": -0.01519494485416446,
+    "high": 0.023377256517614485,
+    "n_positions": 225,
+    "n_resamples_used": 1000,
+    "n_resamples_skipped_one_class": 0
+  },
+  "int_rows_end": {
+    "n_int": 96,
+    "flagged": 69
+  },
+  "sentence": "No detectable difference from `arm2` at this sample size."
+}

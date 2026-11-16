@@ -179,6 +179,40 @@ APP_DIR: Path = ROOT / "app"
 APP_DATA_PATH: Path = APP_DIR / "app_data.csv"
 APP_CONFIG_PATH: Path = APP_DIR / "app_config.json"
 
+# Post-test context (human decision, added after the one test run; not an arm).
+# Public third-party files, stored unedited. Nothing here feeds frozen.json.
+REFERENCE_DIR: Path = OUTPUTS_DIR / "reference"
+ALPHAMISSENSE_PATH: Path = REFERENCE_DIR / "alphamissense_P38398.csv"
+ALPHAMISSENSE_SHA256: str = (
+    "e9519aa837f538536dd46ccbec755a9089bcc57ba2e33b98032596c36436fa51"
+)
+ALPHAMISSENSE_URL: str = (
+    "https://alphafold.ebi.ac.uk/files/AF-P38398-F1-aa-substitutions.csv"
+)
+PROTEINGYM_ROW_PATH: Path = REFERENCE_DIR / "proteingym_brca1_leaderboard.csv"
+PROTEINGYM_URL: str = (
+    "https://github.com/OATML-Markslab/ProteinGym/tree/main/benchmarks/"
+    "DMS_zero_shot/substitutions"
+)
+PROTEINGYM_OUR_MODEL: str = "ESM2 (650M)"
+REFERENCE_RETRIEVED: str = "2026-11-15"
+REFERENCE_ALPHAMISSENSE_RESULT_PATH: Path = RESULTS_DIR / "reference_alphamissense.json"
+REFERENCE_PROTEINGYM_RESULT_PATH: Path = RESULTS_DIR / "reference_proteingym.json"
+
+# Exploratory arm 4 (human decision, added after the one test run). It has its own
+# score file, frozen file and run log, so nothing from stages 3 to 5 is touched.
+ARM4_MODEL_ID: str = "biohub/ESMC-600M"
+ARM4_CANDIDATES: tuple[str, str] = ("esmc", "esm2_esmc_mean")
+ARM4_CANDIDATE_NAMES: dict[str, str] = {
+    "esmc": "ESM-C 600M zero-shot",
+    "esm2_esmc_mean": "the mean of the ESM-2 650M and ESM-C 600M scores",
+}
+ARM4_SCORES_PATH: Path = OUTPUTS_DIR / "arm4_esmc_scores.csv"
+ARM4_FROZEN_PATH: Path = OUTPUTS_DIR / "frozen_arm4.json"
+ARM4_RUN_LOG_PATH: Path = RESULTS_DIR / "arm4_run_log.txt"
+ARM4_RESULT_PATH: Path = RESULTS_DIR / "arm4.json"
+ARM4_PARAGRAPH_PATH: Path = RESULTS_DIR / "arm4_paragraph.md"
+
 # 7.13 Fixed text
 DISCLAIMER: str = "This project is a prototype and is not medical advice."
 DEMO_NOTE: str = (

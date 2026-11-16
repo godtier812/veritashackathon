@@ -1,5 +1,6 @@
 """Unit tests across Stages 1–3 using synthetic data, temporary paths, and monkeypatching."""
 
+import json
 import math
 from collections.abc import Callable
 from pathlib import Path
@@ -1336,3 +1337,243 @@ def test_app_verdict_end_region_track_record(monkeypatch: pytest.MonkeyPatch) ->
 
 
 
+# --- Post-test reference context (src/reference.py) ---
+
+
+def test_reference_leaderboard_summary() -> None:
+    """Ranks count strictly better models, so ties share a rank."""
+    from src import reference
+
+    board = pd.DataFrame(
+        {
+            "model": ["a", "b", "c", "d"],
+            "spearman": [0.6, 0.5, 0.5, 0.2],
+            "auc": [0.7, 0.9, 0.8, 0.6],
+        }
+    )
+    summary = reference.leaderboard_summary(board, "c")
+    assert summary["n_models"] == 4
+    assert summary["spearman"]["our_model_rank"] == 2
+    assert summary["spearman"]["best_model"] == "a"
+    assert summary["spearman"]["best_value"] == 0.6
+    assert summary["auc"]["our_model_rank"] == 2
+    assert summary["auc"]["best_model"] == "b"
+    with pytest.raises(ValueError):
+        reference.leaderboard_summary(board, "missing")
+    with pytest.raises(ValueError):
+        reference.leaderboard_summary(board.rename(columns={"auc": "x"}), "c")
+
+
+def test_reference_parse_alphamissense() -> None:
+    """The third-party table must agree with our wild type and keep scores in 0 to 1."""
+    from src import reference
+
+    good = pd.DataFrame(
+        {
+            "protein_variant": ["M1A", "D2E"],
+            "am_pathogenicity": [0.9, 0.1],
+            "am_class": ["LPath", "LBen"],
+        }
+    )
+    parsed = reference.parse_alphamissense(good, "MDLS")
+    assert list(parsed.columns) == ["mutant", "harm_am"]
+    assert parsed["harm_am"].tolist() == [0.9, 0.1]
+
+    wrong_letter = good.assign(protein_variant=["M1A", "L2E"])
+    with pytest.raises(ValueError, match="1 rows disagree"):
+        reference.parse_alphamissense(wrong_letter, "MDLS")
+    with pytest.raises(ValueError, match="outside 0 to 1"):
+        reference.parse_alphamissense(good.assign(am_pathogenicity=[1.5, 0.1]), "MDLS")
+    with pytest.raises(ValueError, match="unexpected columns"):
+        reference.parse_alphamissense(good.drop(columns=["am_class"]), "MDLS")
+
+
+def test_reference_bootstrap_resamples_positions() -> None:
+    """The paired difference is seeded, signed a minus b, and resamples whole positions."""
+    from src import reference
+
+    positions = np.repeat(np.arange(10), 3)
+    is_harmful = np.tile([1, 0, 0], 10)
+    harm_a = is_harmful.astype(float)
+    harm_b = 1.0 - harm_a
+
+    first = reference.paired_position_bootstrap(positions, is_harmful, harm_a, harm_b, 50, 42)
+    second = reference.paired_position_bootstrap(positions, is_harmful, harm_a, harm_b, 50, 42)
+    assert first == second
+    assert first["point"] == 1.0
+    assert first["low"] == 1.0 and first["high"] == 1.0
+    assert first["n_positions"] == 10
+    assert first["n_resamples_used"] == 50
+
+    same = reference.paired_position_bootstrap(positions, is_harmful, harm_a, harm_a, 50, 42)
+    assert same["point"] == 0.0 and same["low"] == 0.0 and same["high"] == 0.0
+
+    # One position holds the only harmful row, so some resamples have one class and are skipped.
+    lone = np.zeros(30, dtype=int)
+    lone[0] = 1
+    skipped = reference.paired_position_bootstrap(positions, lone, harm_a, harm_b, 200, 42)
+    assert skipped["n_resamples_skipped_one_class"] > 0
+    assert skipped["n_resamples_used"] + skipped["n_resamples_skipped_one_class"] == 200
+
+
+def test_reference_refuses_before_test(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Before the one test run succeeds, the reference module writes nothing."""
+    from src import reference
+
+    monkeypatch.setattr(config, "RUN_LOG_PATH", tmp_path / "run_log.txt")
+    monkeypatch.setattr(
+        config, "REFERENCE_ALPHAMISSENSE_RESULT_PATH", tmp_path / "reference_alphamissense.json"
+    )
+    monkeypatch.setattr(
+        config, "REFERENCE_PROTEINGYM_RESULT_PATH", tmp_path / "reference_proteingym.json"
+    )
+
+    def _must_not_load(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("labels must not be loaded before the test run")
+
+    monkeypatch.setattr(load, "load_labels", _must_not_load)
+    assert reference.main([]) == 1
+    assert list(tmp_path.iterdir()) == []
+
+
+# --- Exploratory arm 4 (src/arm4.py) ---
+
+
+def _arm4_synthetic_region(n_lof: int, n_int: int, n_func: int, first_position: int) -> pd.DataFrame:
+    """Made-up merged table: harmful rows get more negative scores, three rows per position."""
+    rng = np.random.default_rng(7)
+    classes = ["LOF"] * n_lof + ["INT"] * n_int + ["FUNC"] * n_func
+    rng.shuffle(classes)
+    n = len(classes)
+    shift = np.array([{"LOF": -6.0, "INT": -3.0, "FUNC": -1.0}[c] for c in classes])
+    return pd.DataFrame(
+        {
+            "mutant": [f"A{i + 1}C" for i in range(n)],
+            "position": first_position + np.arange(n) // 3,
+            "findlay_class": classes,
+            "esm_score": shift + rng.normal(0.0, 2.0, n),
+            "esmc_score": shift + rng.normal(0.0, 1.0, n),
+        }
+    )
+
+
+def test_arm4_pure_rules(tmp_path: Path) -> None:
+    """Candidate harm scores, the tie rule, the fixed sentences and the log reader."""
+    from src import arm4
+
+    esm2 = np.array([-4.0, 1.0])
+    esmc = np.array([-2.0, -1.0])
+    assert arm4.candidate_harm(esm2, esmc, "esmc").tolist() == [2.0, 1.0]
+    assert arm4.candidate_harm(esm2, esmc, "esm2_esmc_mean").tolist() == [3.0, 0.0]
+    with pytest.raises(ValueError):
+        arm4.candidate_harm(esm2, esmc, "other")
+
+    assert arm4.choose_candidate({"esmc": 0.80, "esm2_esmc_mean": 0.85}) == "esm2_esmc_mean"
+    assert arm4.choose_candidate({"esmc": 0.85, "esm2_esmc_mean": 0.80}) == "esmc"
+    assert arm4.choose_candidate({"esmc": 0.85, "esm2_esmc_mean": 0.85}) == "esmc"
+
+    assert arm4.choose_sentence({"low": 0.01, "high": 0.05}) == arm4.SENTENCE_BETTER
+    assert arm4.choose_sentence({"low": -0.01, "high": 0.05}) == arm4.SENTENCE_NO_DIFFERENCE
+    assert arm4.choose_sentence({"low": 0.0, "high": 0.05}) == arm4.SENTENCE_NO_DIFFERENCE
+    assert arm4.choose_sentence({"low": -0.05, "high": -0.01}) == arm4.SENTENCE_WORSE
+
+    assert arm4.log_statuses(tmp_path / "missing.txt") == []
+    log = tmp_path / "log.txt"
+    log.write_text(
+        "t | run=1 | status=started | reason=status=success in text\n"
+        "t | run=1 | status=failed | reason=x\n",
+        encoding="utf-8",
+    )
+    assert arm4.log_statuses(log) == ["started", "failed"]
+
+
+def test_arm4_freeze_then_one_evaluate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """On made-up data: freeze uses the start region only, evaluate runs once and then refuses."""
+    from src import arm4
+
+    for name in (
+        "ARM4_SCORES_PATH", "ARM4_FROZEN_PATH", "ARM4_RUN_LOG_PATH", "ARM4_RESULT_PATH",
+        "ARM4_PARAGRAPH_PATH", "ESM_SCORES_PATH", "FROZEN_PATH",
+    ):
+        monkeypatch.setattr(config, name, tmp_path / getattr(config, name).name)
+    for name in ("ARM4_SCORES_PATH", "ESM_SCORES_PATH", "FROZEN_PATH"):
+        getattr(config, name).write_text(name, encoding="utf-8")
+
+    tables = {
+        "start": _arm4_synthetic_region(131, 59, 385, 1),
+        "end": _arm4_synthetic_region(267, 96, 899, 1631),
+    }
+    regions_asked: list[tuple[str, str]] = []
+
+    def _fake_labels(region: str, purpose: str) -> pd.DataFrame:
+        regions_asked.append((region, purpose))
+        return tables[region]
+
+    monkeypatch.setattr(load, "load_labels", _fake_labels)
+    monkeypatch.setattr(load, "test_run_done", lambda *_a, **_k: True)
+    monkeypatch.setattr(arm4, "_merged_scores", lambda region, labels: labels.copy())
+    monkeypatch.setattr(
+        arm4, "read_arm4_scores", lambda: pd.DataFrame({"model_id": [config.ARM4_MODEL_ID]})
+    )
+
+    assert arm4.main(["evaluate"]) == 1  # nothing frozen yet
+    assert regions_asked == []
+
+    assert arm4.main(["freeze"]) == 0
+    assert regions_asked == [("start", "tuning")]
+    frozen = json.loads(config.ARM4_FROZEN_PATH.read_text(encoding="utf-8"))
+    assert frozen["chosen"] in config.ARM4_CANDIDATES
+    assert frozen["tuning_caught"] >= 118
+    assert set(frozen["candidates_start_auroc"]) == set(config.ARM4_CANDIDATES)
+    assert arm4.main(["freeze"]) == 1  # never overwritten
+
+    assert arm4.main(["writeup"]) == 1  # no successful run yet
+    assert arm4.main(["evaluate"]) == 0
+    assert regions_asked[-1] == ("end", "post_test")
+    assert arm4.log_statuses(config.ARM4_RUN_LOG_PATH) == ["started", "success"]
+    result = json.loads(config.ARM4_RESULT_PATH.read_text(encoding="utf-8"))
+    end = result["end"]
+    assert end["n_harmful"] == 267 and end["n_harmless"] == 899
+    assert end["harmful_caught"] + end["harmful_missed"] == 267
+    assert result["int_rows_end"]["n_int"] == 96
+    assert result["sentence"] in (
+        arm4.SENTENCE_BETTER, arm4.SENTENCE_NO_DIFFERENCE, arm4.SENTENCE_WORSE
+    )
+    paragraph = config.ARM4_PARAGRAPH_PATH.read_text(encoding="utf-8")
+    assert "exploratory" in paragraph and result["sentence"] in paragraph
+    assert f"{end['harmful_caught']} of 267" in paragraph
+
+    n_asked = len(regions_asked)
+    assert arm4.main(["evaluate"]) == 1  # one run only
+    assert len(regions_asked) == n_asked
+    assert arm4.log_statuses(config.ARM4_RUN_LOG_PATH) == ["started", "success"]
+
+
+def test_arm4_evaluate_refuses_changed_scores(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A score file that changed after the arm 4 freeze stops the run before any label is read."""
+    from src import arm4
+
+    for name in ("ARM4_SCORES_PATH", "ARM4_FROZEN_PATH", "ARM4_RUN_LOG_PATH", "ESM_SCORES_PATH"):
+        monkeypatch.setattr(config, name, tmp_path / getattr(config, name).name)
+    config.ARM4_SCORES_PATH.write_text("scores", encoding="utf-8")
+    config.ESM_SCORES_PATH.write_text("esm", encoding="utf-8")
+    frozen = {
+        "inputs": {
+            "arm4_scores_sha256": config.sha256_of_file(config.ARM4_SCORES_PATH),
+            "esm_scores_sha256": config.sha256_of_file(config.ESM_SCORES_PATH),
+        }
+    }
+    config.ARM4_FROZEN_PATH.write_text(json.dumps(frozen), encoding="utf-8")
+    config.ARM4_SCORES_PATH.write_text("scores changed", encoding="utf-8")
+
+    def _must_not_load(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("labels must not be loaded")
+
+    monkeypatch.setattr(load, "load_labels", _must_not_load)
+    monkeypatch.setattr(load, "test_run_done", lambda *_a, **_k: True)
+    assert arm4.main(["evaluate"]) == 1
+    assert not config.ARM4_RUN_LOG_PATH.exists()

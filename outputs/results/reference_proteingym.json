@@ -1,0 +1,22 @@
+{
+  "n_models": 97,
+  "our_model": "ESM2 (650M)",
+  "spearman": {
+    "our_model_value": 0.515,
+    "our_model_rank": 16,
+    "best_model": "S3F-MSA",
+    "best_value": 0.56,
+    "median_value": 0.456
+  },
+  "auc": {
+    "our_model_value": 0.86,
+    "our_model_rank": 14,
+    "best_model": "S3F-MSA",
+    "best_value": 0.879,
+    "median_value": 0.805
+  },
+  "what": "REFERENCE ONLY. ProteinGym's published zero-shot scores on all 1,837 rows of this table. Its AUC uses ProteinGym's own yes/no labels, so it is not comparable with our end-region AUROC; the Spearman values are comparable with spearman_all_1837.",
+  "source_url": "https://github.com/OATML-Markslab/ProteinGym/tree/main/benchmarks/DMS_zero_shot/substitutions",
+  "retrieved": "2026-11-15",
+  "our_spearman_all_1837": 0.5056392716362414
+}

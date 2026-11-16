@@ -1,0 +1,42 @@
+{
+  "what": "REFERENCE ONLY, added after the one test run. AlphaMissense is a third-party tool, not one of our arms. Same held-out end-region rows as the headline.",
+  "source_url": "https://alphafold.ebi.ac.uk/files/AF-P38398-F1-aa-substitutions.csv",
+  "source_sha256": "e9519aa837f538536dd46ccbec755a9089bcc57ba2e33b98032596c36436fa51",
+  "retrieved": "2026-11-15",
+  "caveat": "AlphaMissense also uses predicted protein structure and population-frequency data, so this is context from a different kind of tool, not a like-for-like contest.",
+  "cutoff_rule": "highest cutoff catching at least 90% of start-region harmful rows",
+  "cutoff": 0.5555,
+  "start_tuning": {
+    "n_harmful": 131,
+    "n_harmless": 385,
+    "harmful_caught": 118,
+    "harmful_missed": 13,
+    "false_alarms": 135,
+    "harmless_cleared": 250
+  },
+  "end": {
+    "n_harmful": 267,
+    "n_harmless": 899,
+    "harmful_caught": 224,
+    "harmful_missed": 43,
+    "false_alarms": 124,
+    "harmless_cleared": 775,
+    "catch_rate_percent": 83.9,
+    "false_alarm_rate_percent": 13.8,
+    "accuracy_percent": 85.7,
+    "auroc": 0.9155,
+    "auroc_arm2_same_rows": 0.8995
+  },
+  "alphamissense_minus_esm": {
+    "point": 0.015937391941941326,
+    "low": -0.0029830097775452088,
+    "high": 0.037972893826302076,
+    "n_positions": 225,
+    "n_resamples_used": 1000,
+    "n_resamples_skipped_one_class": 0
+  },
+  "spearman_with_lab_score": {
+    "all_1837": 0.5795808172043022,
+    "end_1262": 0.5850588472087545
+  }
+}
