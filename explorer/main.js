@@ -149,23 +149,30 @@
   }
 
   function pct(v, lo, hi) { return Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100)); }
-  function gauge(title, value, d, lo, hi, c1, c2, z) {
-    var a = pct(c1, lo, hi), b = pct(c2, lo, hi);
-    var h = '<div class="gauge"><div class="lab"><span>' + title + '</span><span class="num">' + (value === null ? "not lab-tested" : fmt(value, d)) + "</span></div>";
+
+  var esmlo, esmhi, lablo, labhi, absmin, rankesm, ranklab;
+  function share(arr, v) {
+    var lo = 0, hi = arr.length;
+    while (lo < hi) { var m = (lo + hi) >> 1; if (arr[m] < v) lo = m + 1; else hi = m; }
+    var left = lo; hi = arr.length;
+    while (lo < hi) { var n = (lo + hi) >> 1; if (arr[n] <= v) lo = n + 1; else hi = n; }
+    return (arr.length - lo + 0.5 * (lo - left)) / arr.length * 100;
+  }
+  function rgauge(title, sh, raw, c1, c2, z) {
+    var a = 100 - c1, b = 100 - c2;
+    var h = '<div class="gauge"><div class="lab"><span>' + title + '</span><span class="num">' + (sh === null ? "not lab-tested" : "more harmful than " + Math.round(sh) + "%") + "</span></div>";
     h += '<div class="gtrack">';
     h += '<i class="z" style="width:' + a + "%;background:" + z[0] + '"></i>';
     h += '<i class="z" style="width:' + (b - a) + "%;background:" + z[1] + '"></i>';
     h += '<i class="z" style="width:' + (100 - b) + "%;background:" + z[2] + '"></i>';
-    h += '<i class="cut" style="left:' + a + '%"><span>' + fmt(c1, d === 3 ? 3 : 2) + "</span></i>";
-    h += '<i class="cut r" style="left:' + b + '%"><span>' + fmt(c2, d === 3 ? 3 : 2) + "</span></i>";
-    if (value !== null) h += '<i class="mk" style="left:' + pct(value, lo, hi) + '%"></i>';
+    if (sh !== null) h += '<i class="mk" style="left:' + (100 - sh) + '%"></i>';
     return h + "</div></div>";
   }
-
-  var esmlo, esmhi, lablo, labhi, absmin;
   function ranges() {
     var e = [], l = [];
-    data.positions.forEach(function (p) { p.swaps.forEach(function (s) { e.push(s[1]); if (s[3] !== null) l.push(s[3]); }); });
+    rankesm = []; ranklab = [];
+    data.positions.forEach(function (p) { p.swaps.forEach(function (s) { e.push(s[1]); if (s[3] !== null) l.push(s[3]); if (s[2]) { rankesm.push(s[1]); ranklab.push(s[3]); } }); });
+    rankesm.sort(function (x, y) { return x - y; }); ranklab.sort(function (x, y) { return x - y; });
     esmlo = Math.floor(Math.min.apply(null, e)) - 1; esmhi = Math.ceil(Math.max.apply(null, e)) + 1;
     lablo = Math.floor(Math.min.apply(null, l)) - 1; labhi = Math.ceil(Math.max.apply(null, l)) + 1;
     absmin = Math.min.apply(null, e);
@@ -201,9 +208,10 @@
     h += '<div class="bignums"><div class="bignum"><div class="k">Model score</div><div class="n" id="n-esm"></div></div>';
     h += '<div class="bignum"><div class="k">Lab function score</div><div class="n' + (it.lc ? "" : " na") + '" id="n-lab"></div></div></div>';
     h += '<div class="badge st-' + it.a + '">' + icon(it.a) + "<div><b>" + ai[0] + "</b><p>" + ai[1] + "</p></div></div>";
-    h += gauge("Model score", it.esm, 2, esmlo, esmhi, -cut.b2, -cut.a,
+    h += '<p class="strip-note">Both bars use the same scale: where this swap ranks among the ' + rankesm.length.toLocaleString("en-US") + " lab-tested swaps (LOF, INT and FUNC; ties count half). Top: the model's prediction. Bottom: the lab measurement. Further left means more harmful. If the model's ranking matched the lab's, the markers would line up.</p>";
+    h += rgauge("Model: how harmful it looks", share(rankesm, it.esm), "score " + fmt(it.esm, 2), share(rankesm, -cut.b2), share(rankesm, -cut.a),
       ["rgba(255,122,102,.55)", "rgba(242,185,75,.45)", "rgba(63,207,184,.45)"]);
-    h += gauge("The lab's answer", it.lc ? it.ls : null, 3, lablo, labhi, cfg.lof_below, cfg.func_above,
+    h += rgauge("Lab: how harmful it was", it.lc ? share(ranklab, it.ls) : null, it.lc ? "score " + fmt(it.ls, 3) : "", share(ranklab, cfg.lof_below), share(ranklab, cfg.func_above),
       ["rgba(255,122,102,.55)", "rgba(125,138,161,.45)", "rgba(63,207,184,.45)"]);
     h += "<details><summary>Show the numbers</summary><dl>";
     h += "<dt>Cutoffs</dt><dd>Harmful at or below <span class=num>" + fmt(-cut.b2, 2) + "</span>; harmless above <span class=num>" + fmt(-cut.a, 2) + "</span>; can't tell in between. Set on the start region only.</dd>";

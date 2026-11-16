@@ -1,5 +1,6 @@
 """Self-contained Gradio demo for BRCA Spellcheck (arm 2 zero-shot ESM-2 lookup)."""
 
+import bisect
 import json
 from pathlib import Path
 import re
@@ -476,6 +477,21 @@ lab_rows = APP_DATA[APP_DATA["lab_class"] != ""]
 lab_values = lab_rows["lab_score"].astype(float)
 lab_lo = float(int(lab_values.min()) - 1) if len(lab_values) else -4.0
 lab_hi = float(int(lab_values.max()) + 1) if len(lab_values) else 2.0
+rank_esm = sorted(lab_rows["esm_score"].astype(float).tolist())
+rank_lab = sorted(lab_values.tolist())
+n_rank = len(rank_lab)
+
+
+def harmful_share(sorted_values: list[float], value: float) -> float:
+    if not sorted_values:
+        return 0.0
+    right = bisect.bisect_right(sorted_values, value)
+    ties = right - bisect.bisect_left(sorted_values, value)
+    return (len(sorted_values) - right + 0.5 * ties) / len(sorted_values) * 100.0
+
+
+def rank_text(share: float, raw: str) -> str:
+    return f"more harmful than {share:.0f}% · score {raw}"
 lab_tested_list = [
     f"{wt}{int(pos)}{new}"
     for pos, wt, new in zip(lab_rows["position"], lab_rows["wild_type"], lab_rows["new_letter"])
@@ -724,42 +740,46 @@ def gauge(esm: float, lab_class: str, lab_score: float | None, mutant: str) -> s
     cut_a, cut_b = cutoffs()
     line_a = -cut_a
     line_b = -cut_b if cut_b is not None else line_a
+    esm_share = harmful_share(rank_esm, esm)
     model_track = track(
-        "Model's call (ESM-2 score)",
-        signed(esm, 2),
-        esm_lo,
-        esm_hi,
-        line_b,
-        line_a,
+        "Model: how harmful it looks",
+        rank_text(esm_share, signed(esm, 2)),
+        0.0,
+        100.0,
+        100.0 - harmful_share(rank_esm, line_b),
+        100.0 - harmful_share(rank_esm, line_a),
         ["var(--harmful-soft)", "var(--cant-soft)", "var(--harmless-soft)"],
         [("harmful", "st-harmful", "harmful"), ("can't tell", "st-cant", "cant"), ("harmless", "st-harmless", "harmless")],
-        [signed(line_b, 2), signed(line_a, 2)],
-        esm,
+        ["", ""],
+        100.0 - esm_share,
         "",
     )
     if lab_class == "" or lab_score is None:
         lab_track = (
-            '<div class="track"><div class="track-label"><span>Lab\'s answer (function score)</span>'
+            '<div class="track"><div class="track-label"><span>Lab: how harmful it was</span>'
             '<b class="mono">not tested</b></div>'
             f'<div class="untested-track">{icon("untested", "st-untested")}&nbsp; No lab measurement for this swap.</div></div>'
         )
     else:
+        lab_share = harmful_share(rank_lab, lab_score)
         lab_track = track(
-            "Lab's answer (function score)",
-            signed(lab_score, 3),
-            lab_lo,
-            lab_hi,
-            lof_below,
-            func_above,
+            "Lab: how harmful it was",
+            rank_text(lab_share, signed(lab_score, 3)),
+            0.0,
+            100.0,
+            100.0 - harmful_share(rank_lab, lof_below),
+            100.0 - harmful_share(rank_lab, func_above),
             ["var(--harmful-soft)", "var(--untested-soft)", "var(--harmless-soft)"],
             [("broken (LOF)", "st-harmful", "harmful"), ("in between", "st-untested", "grey"), ("working (FUNC)", "st-harmless", "harmless")],
-            [signed(lof_below, 3), signed(func_above, 3)],
-            lab_score,
+            ["", ""],
+            100.0 - lab_share,
             "lab",
         )
     return (
         f'<div class="gauge" role="img" aria-label="Score gauge for {esc(mutant)}">'
-        f'<p class="fig">Where {esc(mutant)} lands. Further left means more likely harmful.</p>'
+        f'<p class="fig">Both bars use the same scale: where {esc(mutant)} ranks among the {n_rank:,} lab-tested swaps '
+        "(LOF, INT and FUNC; ties count half). The top bar ranks the model's prediction; the bottom bar ranks the lab "
+        "measurement. Further left means more harmful. If the model's ranking matched the lab's, the two markers would line up.</p>"
         f"{model_track}{lab_track}</div>"
     )
 
