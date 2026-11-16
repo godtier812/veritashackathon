@@ -428,6 +428,62 @@ main {
   font-size: 17px;
 }
 
+.wins {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--s4);
+  margin-top: var(--s5);
+}
+
+.win {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: var(--s5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.win-tag {
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--cant);
+  background: var(--cant-soft);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.win-big {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 44px;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.2;
+}
+
+.win-big small {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+.win h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.win-fine {
+  margin: auto 0 0;
+  padding-top: var(--s2);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
 .fields {
   display: grid;
   grid-template-columns: minmax(0, 267fr) minmax(0, 600fr);

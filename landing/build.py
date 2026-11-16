@@ -236,6 +236,82 @@ def failure_block():
     return '<div class="cases">' + "".join(parts) + "</div>"
 
 
+def jfile(name):
+    path = find(name)
+    return json.loads(path.read_text(encoding="utf-8")) if path else None
+
+
+def card(big, title, text, tag=""):
+    label = f'<span class="win-tag">{esc(tag)}</span>' if tag else ""
+    return f'<article class="win">{label}<p class="win-big">{big}</p><h3>{esc(title)}</h3><p class="win-fine">{text}</p></article>'
+
+
+def wins_block():
+    cards = []
+    a2 = arm("arm2")
+    auc = {}
+    if auroc is not None:
+        auc = {str(r["arm"]): float(r["auroc"]) for _, r in auroc.iterrows()}
+    bands = table("band_counts.csv")
+    b = {}
+    if bands is not None:
+        b = {str(r["findlay_class"]): r for _, r in bands.iterrows()}
+    if a2 is not None:
+        split = ""
+        if "LOF" in b and "FUNC" in b:
+            split = (
+                f" ({int(b['LOF']['looks_harmful'])} \u201clooks harmful\u201d, {int(b['LOF']['cant_tell'])} \u201ccan\u2019t tell\u201d)"
+            )
+        alarm_split = f" ({int(b['FUNC']['cant_tell'])} of them \u201ccan\u2019t tell\u201d)" if "FUNC" in b else ""
+        cards.append(card(
+            f"{float(a2['catch_rate_percent']):.1f}%",
+            "of harmful mutations caught, on a part of the protein we kept hidden until one final test.",
+            f"{int(a2['harmful_caught'])} of {int(a2['n_harmful'])} not cleared as harmless{split}, positions "
+            f"{end_region[0]}\u2013{end_region[1]}, tested once. It also failed to clear {int(a2['false_alarms'])} of "
+            f"{int(a2['n_harmless'])} harmless ones{alarm_split}.",
+        ))
+    if b:
+        if "LOF" in b and "FUNC" in b:
+            right = int(b["FUNC"]["looks_harmless"])
+            wrong = int(b["LOF"]["looks_harmless"])
+            n_func = int(b["FUNC"]["total"])
+            n_clear = n_func + int(b["LOF"]["total"])
+            cards.append(card(
+                f"{100.0 * right / (right + wrong):.1f}%",
+                "of the time, when the model said a change looks harmless, the lab agreed.",
+                f"{right} of {right + wrong} \u201clooks harmless\u201d calls on the held-out test with a clear lab "
+                f"answer. It made that call for {right + wrong} of {n_clear:,} changes; "
+                f"{100.0 * n_func / n_clear:.0f}% of test changes are harmless. When unsure, it says "
+                "\u201ccan\u2019t tell\u201d instead of guessing.",
+            ))
+    if "arm2" in auc:
+        extra = f" A classic substitution table (BLOSUM62) scores {auc['arm1'] * 100:.0f}% on the same measure." if "arm1" in auc else ""
+        cards.append(card(
+            f"{auc['arm2'] * 100:.0f}%",
+            "of the time, shown one harmful and one harmless change, the model ranks the harmful one as worse.",
+            f"AUROC {auc['arm2']:.4f} on the held-out test; 50% would be a coin flip, and ties count as half.{extra}",
+        ))
+    cards.append(card(
+        "0",
+        "lab results the model learned from. It only read natural protein sequences.",
+        "Zero-shot: lab answers were used only to set the cutoffs on the start region and to grade the model.",
+    ))
+    am = jfile("reference_alphamissense.json")
+    if am and "end" in am:
+        d = am["alphamissense_minus_esm"]
+        cards.append(card(
+            f"{am['end']['auroc_arm2_same_rows'] * 100:.0f}% <small>vs</small> {am['end']['auroc'] * 100:.0f}%",
+            "close to AlphaMissense\u2019s ranking, just below it, using fewer kinds of data.",
+            f"AUROC {am['end']['auroc_arm2_same_rows']:.4f} vs {am['end']['auroc']:.4f} on the same held-out rows; "
+            f"the gap ({signed(d['point'], 3)}, 95% range {signed(d['low'], 3)} to {signed(d['high'], 3)}) includes zero. "
+            "Our model reads only the protein sequence; AlphaMissense also uses 3D structure and population data. We do not claim to be better.",
+            "checked after the test",
+        ))
+    if not cards:
+        return f"<p>{na}</p>"
+    return '<div class="wins">' + "".join(cards) + "</div>"
+
+
 def protein_map():
     def pct(p):
         return (p - 1) / (protein_length - 1) * 100
@@ -378,6 +454,7 @@ def build(demo_url, explorer_url=""):
         "{{n_lab}}": f"{n_lab:,}",
         "{{c61g_line}}": lab_line,
         "{{steps}}": steps_block(),
+        "{{wins}}": wins_block(),
         "{{pmap}}": protein_map(),
         "{{s6}}": esc(s6),
         "{{fields}}": results_block(),
@@ -427,6 +504,7 @@ TEMPLATE = """<!doctype html>
   <div class="bar-in">
     <a class="name" href="#top">BRCA Spellcheck</a>
     <nav aria-label="Sections">
+      <a href="#wins">Highlights</a>
       <a href="#how">How it works</a>
       <a href="#results">Results</a>
       <a href="#fails">Where it fails</a>
@@ -443,6 +521,12 @@ TEMPLATE = """<!doctype html>
   <p class="cap">The first 101 letters of BRCA1. The red underline marks how harmful the model finds changes at each position, on average across all 19 possible swaps. Darker means more harmful, compared with the other positions here. Then C61G: the C at position 61 becomes a G. {{c61g_line}}</p>
   <div class="hero-cta">{{cta}}<a class="link" href="#results">See the results</a></div>
   <p class="exam">BRCA1 is our exam, not the use case. It is one of the few genes with a lab answer key, so we can check the model here before anyone trusts this kind of model on a gene without one.</p>
+</section>
+
+<section class="sec" id="wins">
+  <h2>What we can show.</h2>
+  <p class="sub">Every number is read from our results files, from the one held-out test unless tagged.</p>
+  {{wins}}
 </section>
 
 <section class="sec" id="how">
