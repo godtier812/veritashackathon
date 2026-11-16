@@ -301,10 +301,23 @@ def wins_block():
         d = am["alphamissense_minus_esm"]
         cards.append(card(
             f"{am['end']['auroc_arm2_same_rows'] * 100:.0f}% <small>vs</small> {am['end']['auroc'] * 100:.0f}%",
-            "close to AlphaMissense\u2019s ranking, just below it, using fewer kinds of data.",
+            "close to Google DeepMind\u2019s AlphaMissense, a widely used mutation predictor, just below it, using fewer kinds of data.",
             f"AUROC {am['end']['auroc_arm2_same_rows']:.4f} vs {am['end']['auroc']:.4f} on the same held-out rows; "
             f"the gap ({signed(d['point'], 3)}, 95% range {signed(d['low'], 3)} to {signed(d['high'], 3)}) includes zero. "
             "Our model reads only the protein sequence; AlphaMissense also uses 3D structure and population data. We do not claim to be better.",
+            "checked after the test",
+        ))
+    pg = jfile("reference_proteingym.json")
+    if pg and "spearman" in pg:
+        sp = pg["spearman"]
+        rank, total = int(sp["our_model_rank"]), int(pg["n_models"])
+        top = -(-100 * rank // total)
+        top = -(-top // 5) * 5
+        cards.append(card(
+            f"Top {top}%",
+            f"is where the model we built on ranks, among {total} models on ProteinGym, a widely used public benchmark, for this BRCA1 data.",
+            f"ESM-2 650M ranks {rank} of {total} zero-shot models by Spearman (median {sp['median_value']:.3f}, "
+            f"ESM-2 {sp['our_model_value']:.3f}). Our own run scored {pg['our_spearman_all_1837']:.3f}: close, but not identical.",
             "checked after the test",
         ))
     if not cards:
