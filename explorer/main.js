@@ -1,5 +1,5 @@
 (function () {
-  var toolurl = /\/explorer\/?$/.test(location.pathname) ? "../" : "";
+  var toolurl = /\/explorer\/?$/.test(location.pathname) ? "../tool/" : "";
   var order = "ACDEFGHIKLMNPQRSTVWY";
   var names = {
     A: "alanine", C: "cysteine", D: "aspartate", E: "glutamate", F: "phenylalanine", G: "glycine",

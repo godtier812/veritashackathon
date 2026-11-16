@@ -346,7 +346,7 @@ def credits_block():
     )
 
 
-def build(demo_url):
+def build(demo_url, explorer_url=""):
     a2 = arm("arm2")
     a1 = arm("arm1")
     s6 = sentences.get("S6", na)
@@ -361,7 +361,7 @@ def build(demo_url):
         )
     cta = (
         f'<a class="btn" href="{esc(demo_url)}">Try the demo</a>'
-        f' <a class="btn btn-alt" href="{esc(demo_url.rstrip("/") + "/explorer/")}">Explore in 3D</a>'
+        + (f' <a class="btn btn-alt" href="{esc(explorer_url)}">Explore in 3D</a>' if explorer_url else "")
         if demo_url
         else ""
     )
@@ -496,6 +496,7 @@ TEMPLATE = """<!doctype html>
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--demo-url", default="http://127.0.0.1:7861/")
+    parser.add_argument("--demo-url", default="http://127.0.0.1:7861/tool/")
+    parser.add_argument("--explorer-url", default="http://127.0.0.1:7861/explorer/")
     args = parser.parse_args()
-    print(build(args.demo_url))
+    print(build(args.demo_url, args.explorer_url))

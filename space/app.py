@@ -24,23 +24,28 @@ def explorer_slash():
     return RedirectResponse("/explorer/")
 
 
+@server.get("/tool", include_in_schema=False)
+def tool_slash():
+    return RedirectResponse("/tool/")
+
+
 @server.get("/landing", include_in_schema=False)
-def landing_slash():
-    return RedirectResponse("/landing/")
+@server.get("/landing/", include_in_schema=False)
+def landing_old():
+    return RedirectResponse("/")
 
 
 server.mount("/explorer", StaticFiles(directory=root / "explorer", html=True), name="explorer")
-if (root / "landing" / "index.html").exists():
-    server.mount("/landing", StaticFiles(directory=root / "landing", html=True), name="landing")
 server = gr.mount_gradio_app(
     server,
     tool.demo,
-    path="/",
+    path="/tool",
     theme=tool.theme,
     css=tool.css_text,
     head=tool.font_link + tool.head_script,
     footer_links=[],
 )
+server.mount("/", StaticFiles(directory=root / "landing", html=True), name="landing")
 
 if __name__ == "__main__":
     uvicorn.run(server, host="0.0.0.0", port=int(os.environ.get("PORT", "7860")))
