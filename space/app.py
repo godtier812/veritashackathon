@@ -1,44 +1,39 @@
 import importlib.util
+import os
 from pathlib import Path
 
+import gradio as gr
+import uvicorn
+from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from starlette.routing import Mount, Route
 
 here = Path(__file__).resolve().parent
 root = here if (here / "app" / "app.py").exists() else here.parent
-
-try:
-    import spaces
-
-    @spaces.GPU
-    def unused():
-        return None
-except ImportError:
-    spaces = None
 
 spec = importlib.util.spec_from_file_location("brca_tool", root / "app" / "app.py")
 tool = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tool)
 tool.explorer_url = "/explorer/"
 
+server = FastAPI()
 
-def explorer_slash(request):
+
+@server.get("/explorer", include_in_schema=False)
+def explorer_slash():
     return RedirectResponse("/explorer/")
 
 
-def attach(app):
-    app.router.routes.insert(0, Route("/explorer", explorer_slash))
-    app.router.routes.insert(1, Mount("/explorer", app=StaticFiles(directory=root / "explorer", html=True), name="explorer"))
-
+server.mount("/explorer", StaticFiles(directory=root / "explorer", html=True), name="explorer")
+server = gr.mount_gradio_app(
+    server,
+    tool.demo,
+    path="/",
+    theme=tool.theme,
+    css=tool.css_text,
+    head=tool.font_link + tool.head_script,
+    footer_links=[],
+)
 
 if __name__ == "__main__":
-    app, local_url, share_url = tool.demo.launch(
-        theme=tool.theme,
-        css=tool.css_text,
-        head=tool.font_link + tool.head_script,
-        footer_links=[],
-        prevent_thread_lock=True,
-    )
-    attach(app)
-    tool.demo.block_thread()
+    uvicorn.run(server, host="0.0.0.0", port=int(os.environ.get("PORT", "7860")))

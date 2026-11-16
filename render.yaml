@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: brca-spellcheck
+    runtime: python
+    plan: free
+    buildCommand: pip install -r space/requirements.txt
+    startCommand: python space/app.py
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8

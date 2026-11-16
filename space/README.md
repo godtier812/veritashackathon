@@ -20,6 +20,6 @@ One Space, two pages:
 
 BRCA1 is our exam, not the use case. Both pages read cached scores and lab results; no model runs here. Structures (PDB 1JM7 and 1T15) are shown for orientation only; the model saw sequence alone.
 
-Hardware: ZeroGPU (free tier). No GPU work runs; the app only reads cached files.
+Also deploys on Render's free tier from the repository root (`render.yaml`: `pip install -r space/requirements.txt`, then `python space/app.py`, which reads `PORT`).
 
 Space layout: `app.py` (this launcher), `app/` (the tool, unchanged when run on its own with `python app/app.py`), `explorer/` (the static explorer), `requirements.txt`.
